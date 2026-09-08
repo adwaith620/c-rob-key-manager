@@ -1,0 +1,174 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+serve(async (req) => {
+  try {
+    // Only allow authorized cron requests
+    const authHeader = req.headers.get("Authorization");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // 1. Fetch active sessions (where status is 'active')
+    const { data: activeSessions, error: sessionErr } = await supabaseAdmin
+      .from("key_sessions")
+      .select("*, bookings(*, profiles(*))")
+      .eq("status", "active");
+
+    if (sessionErr || !activeSessions) {
+      console.error("Failed to fetch sessions:", sessionErr);
+      return new Response("Internal Server Error", { status: 500 });
+    }
+
+    const now = new Date();
+    let remindersSent = 0;
+    let escalationsSent = 0;
+
+    for (const session of activeSessions) {
+      const booking = session.bookings;
+      if (!booking || !booking.profiles) continue;
+
+      const startTime = new Date(booking.start_time);
+      const endTime = new Date(startTime.getTime() + booking.duration_hours * 3600000);
+      
+      const timeRemainingMs = endTime.getTime() - now.getTime();
+      const minutesRemaining = timeRemainingMs / 60000;
+
+      // -------------------------------------------------------------
+      // REMINDER LOGIC (<= 30 minutes remaining, and > 0)
+      // -------------------------------------------------------------
+      if (minutesRemaining <= 30 && minutesRemaining >= 0) {
+        // Check if reminder was already sent
+        const { data: existingReminders } = await supabaseAdmin
+          .from("notifications")
+          .select("id")
+          .eq("booking_id", booking.id)
+          .eq("type", "reminder")
+          .limit(1);
+
+        if (!existingReminders || existingReminders.length === 0) {
+          // Send reminder
+          const msg = `Your C-ROB key session ends in ${Math.ceil(minutesRemaining)} minutes. Please return it to the locker soon.`;
+          
+          await supabaseAdmin.from("notifications").insert({
+            user_id: session.current_holder,
+            booking_id: booking.id,
+            type: "reminder",
+            message: msg,
+          });
+
+          // Email
+          if (RESEND_API_KEY) {
+            await sendEmail(booking.profiles.email, "Reminder: Return C-ROB Key", msg);
+          }
+          remindersSent++;
+        }
+      }
+
+      // -------------------------------------------------------------
+      // ESCALATION LOGIC (<= -10 minutes remaining / Overdue by 10m)
+      // -------------------------------------------------------------
+      if (minutesRemaining <= -10) {
+        // Check if escalation was already sent
+        const { data: existingEscalations } = await supabaseAdmin
+          .from("notifications")
+          .select("id")
+          .eq("booking_id", booking.id)
+          .eq("type", "escalation")
+          .limit(1);
+
+        if (!existingEscalations || existingEscalations.length === 0) {
+          // Send escalation to admins
+          const { data: admins } = await supabaseAdmin
+            .from("profiles")
+            .select("id, email")
+            .in("role", ["admin", "execom"]);
+
+          if (admins && admins.length > 0) {
+            const msg = `ESCALATION: The key has not been returned by ${booking.profiles.full_name}. It is currently ${Math.abs(Math.floor(minutesRemaining))} minutes overdue.`;
+            
+            const notifs = admins.map(admin => ({
+              user_id: admin.id,
+              booking_id: booking.id,
+              type: "escalation",
+              message: msg,
+            }));
+            
+            await supabaseAdmin.from("notifications").insert(notifs);
+
+            if (RESEND_API_KEY) {
+              const emails = admins.map(a => a.email).filter(Boolean);
+              await sendEmail(emails, "URGENT: C-ROB Key Overdue", msg);
+            }
+            escalationsSent++;
+          }
+        }
+      }
+    }
+
+    // =============================================================
+    // HANDOVER EXPIRY LOGIC
+    // =============================================================
+    const { data: expiredHandovers, error: handoverErr } = await supabaseAdmin
+      .from("handovers")
+      .select("*")
+      .eq("status", "pending_acceptance")
+      .lt("expires_at", now.toISOString());
+
+    let handoversExpired = 0;
+    if (!handoverErr && expiredHandovers && expiredHandovers.length > 0) {
+      for (const handover of expiredHandovers) {
+        // Find the booking_id for this session to satisfy the notifications FK
+        const { data: session } = await supabaseAdmin.from("key_sessions").select("booking_id").eq("id", handover.session_id).single();
+        const bookingId = session?.booking_id || handover.session_id; // Fallback, though FK might fail if strict
+
+        // Mark as expired
+        await supabaseAdmin
+          .from("handovers")
+          .update({ status: "expired" })
+          .eq("id", handover.id);
+        
+        // Notify sender and receiver
+        if (session) {
+          await supabaseAdmin.from("notifications").insert([
+            { user_id: handover.from_user_id, booking_id: bookingId, type: "system", message: "Your key handover request has expired." },
+            { user_id: handover.to_user_id, booking_id: bookingId, type: "system", message: "A key handover request sent to you has expired." }
+          ]);
+        }
+        handoversExpired++;
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, remindersSent, escalationsSent, handoversExpired }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
+});
+
+async function sendEmail(to: string | string[], subject: string, text: string) {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: "C-ROB Smart Locker <locker@tkmce.ac.in>", // Verify this domain
+      to: Array.isArray(to) ? to : [to],
+      subject: subject,
+      html: `<p>${text}</p>`
+    })
+  });
+  if (!res.ok) {
+    console.error("Resend error:", await res.text());
+  }
+}
