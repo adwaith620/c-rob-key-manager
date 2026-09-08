@@ -1,91 +1,109 @@
-# C-ROB Key Manager
+# C-ROB Smart Key Locker
 
-Build a web application called "C-ROB Smart Key Locker" — a role-based system for booking and managing access to a physical room key stored in a smart locker. This is the initial scaffold only: focus on a clean, professional UI shell with working navigation and Supabase auth. Don't build hardware integration, OTP delivery, or notification logic yet — just the structure and placeholder states for them.
+A complete hardware-integrated key management and booking system for the C-ROB Lab at TKMCE. 
 
-VISUAL STYLE
-Before building, visit https://crobtkmcee.vercel.app (this is the existing C-ROB / TKMCE Centre for Robotics website) and match its visual style for this new app — color palette, typography, spacing, button/card styling, and overall look and feel. This is a different application (key locker booking system, not the club's main site), so don't copy its content or page structure, just the visual design language, so it feels like it belongs to the same organization.
+This repository contains the frontend web application and the Supabase backend architecture (Database schemas, Edge Functions, and automated cron jobs) required to securely manage physical custody of the C-ROB lab key.
 
-PROJECT CONTEXT
-C-ROB Smart Key Locker controls access to a physical key. Normal members book a time slot on the website and get an OTP to use on a physical keypad. Execom members (student leadership/staff) use fingerprint auth on the hardware directly. A Hall Effect sensor confirms whether the key is physically in the locker. This web app is the software side: registration, booking, and role-based dashboards.
+## 🚀 Features
 
-TECH PREFERENCES
-- Use Supabase for auth and database (I'll connect my own Supabase project).
-- Use React + TypeScript + Tailwind for the frontend.
-- Match the visual style of https://crobtkmcee.vercel.app as described above.
+### 1. Authentication & Security
+*   **Google SSO Integration:** Users sign in strictly using their `@tkmce.ac.in` Google workspace accounts.
+*   **Role-Based Access Control (RBAC):** Three distinct tiers of access (`Member`, `Execom`, and `Admin`) strictly enforced by PostgreSQL Row Level Security (RLS).
+*   **Admin Console:** A dedicated dashboard for Administrators to view all registered users, search by email/name, and securely promote or demote roles.
 
-USER ROLES (3 roles, stored on a `profiles` table linked to auth.users)
-1. Member — normal registered user, books time slots.
-2. Execom — elevated role, approves requests, sees operational dashboard.
-3. Admin — full system access.
+### 2. Booking Engine & OTP System
+*   **Slot Booking:** Members can book the key for 1-5 hour intervals.
+*   **Conflict Prevention:** A database-level Postgres trigger strictly prevents overlapping booking slots.
+*   **Secure OTP Generation:** Upon booking, a Supabase Edge Function automatically generates a 6-digit PIN and securely emails it to the user via Resend.
+*   **Hardware Gateway:** A dedicated Edge Function endpoint (`iot-gateway`) for the ESP32 hardware keypad to validate the PIN.
 
-PAGES TO BUILD
+### 3. Physical Custody & Handovers
+*   **IoT State Tracking:** The database explicitly tracks the physical sequence of events (`locker_opened` -> `key_removed` -> `key_returned`) triggered by the ESP32 Hall Effect sensors.
+*   **Peer-to-Peer Handovers:** A current key holder can initiate a "Handover Request" to another registered member, transferring digital custody. Requests auto-expire after 10 minutes.
+*   **Execom Delegation:** Execom members can monitor a lab-wide view of active key custody, and can override standard members via the "Request Takeover" mechanism.
 
-Public pages:
-- Landing page: explain what C-ROB Smart Key Locker is, how booking works, and Execom vs Member access, with a clear "Register" / "Login" call to action.
-- Registration page: email + password + full name + phone number. Show a clear inline validation message if the email doesn't end in "@tkmce.ac.in" (real enforcement happens server-side, see EMAIL RESTRICTION below — this client-side check is just for immediate user feedback). After signup, show a "check your email to verify" screen. Default new users to the "Member" role.
-- Login page: email + password.
-- Forgot password / reset password flow using Supabase auth.
+### 4. Automated Reminders & Escalations
+*   **pg_cron Integration:** A native Postgres cron job runs every 5 minutes to verify all active sessions.
+*   **30-Minute Reminders:** The system automatically emails the current key holder 30 minutes before their session ends.
+*   **Overdue Escalations:** If the key is not returned 10 minutes past the session end time, the system emails all C-ROB Admins/Execoms and flashes an urgent dashboard alert.
 
-EMAIL RESTRICTION — MUST BE SERVER-SIDE (not just form validation)
-Registration must be restricted to institutional emails ending in "@tkmce.ac.in", enforced at the database level so it cannot be bypassed by calling the Supabase API directly:
-- Create a Postgres trigger function that runs BEFORE INSERT on auth.users.
-- The function should check the new row's email against the pattern for "@tkmce.ac.in" (case-insensitive) and raise an exception with a clear message (e.g. "Registration is restricted to @tkmce.ac.in email addresses") if it doesn't match.
-- Attach this as a trigger named something like check_college_email on auth.users.
-- On the frontend, catch this error when it comes back from the signup call and display it as a friendly inline form error, not a raw database error message.
-- Write this as a proper Supabase migration file, not an ad-hoc one-off script.
+---
 
-Member Dashboard (after login, role = Member):
-- Header showing current locker/key status as a simple badge: "Available" / "Booked" / "Key Out" (use placeholder/mock state for now).
-- A booking section: pick a future date/time and a duration (1, 2, 3, 4, or 5 hours) from a dropdown, then a "Request Booking" button. Show a list of the user's upcoming and past bookings below (use mock data for now — 2-3 example rows).
-- A "Current Session" card that would show OTP/return-deadline info when active — for now just build the empty and "active" visual states with mock data, no real OTP generation yet.
-- A placeholder "Notifications" panel (empty state: "No new notifications").
+## 🛠️ Tech Stack
+*   **Frontend:** React 19, TypeScript, Vite, TanStack Router
+*   **Styling:** Tailwind CSS, shadcn/ui
+*   **Backend:** Supabase (PostgreSQL, GoTrue Auth)
+*   **Serverless:** Supabase Edge Functions (Deno)
+*   **Emails:** Resend API
 
-Execom Dashboard (after login, role = Execom):
-- Operational overview: current key holder, active session, today's bookings (mock data table).
-- Pending extension requests list with Approve/Reject buttons (non-functional for now, just UI).
-- A placeholder "Delegated Authority" section.
+---
 
-Admin Dashboard (after login, role = Admin):
-- Overview cards: total members, active sessions, today's bookings, overdue keys (mock numbers).
-- A users table (mock data) with role shown per user.
-- A basic audit log table (mock rows: actor, action, timestamp).
+## ⚙️ Setup & Deployment Guide
 
-NAVIGATION
-- Persistent sidebar or top nav that changes visible links based on role (Member sees only Member Dashboard, Execom sees Execom + Member views, Admin sees everything).
-- Simple logout button.
+### 1. Database Initialization
+1. Create a new Supabase project.
+2. Go to the **SQL Editor** and paste the entire contents of `db/schema.sql`.
+3. Run the script. This will set up all tables, RLS policies, triggers, and the 5-minute cron scheduler.
 
-DATABASE (create these Supabase tables via migration, with RLS enabled)
-- `profiles`: id (uuid, references auth.users), full_name, phone, role (text, default 'member'), created_at.
-- `bookings`: id (uuid), user_id (references profiles), start_time (timestamptz), duration_hours (int), status (text: 'pending', 'confirmed', 'cancelled', 'completed'), created_at.
-Add RLS so users can only see/edit their own bookings, but Execom and Admin roles can see all bookings.
-Also include the email-restriction trigger described above as part of this same migration set.
+### 2. Edge Functions Deployment
+You must deploy the three serverless functions that power the backend logic:
+```bash
+npx supabase functions deploy generate-otp
+npx supabase functions deploy iot-gateway
+npx supabase functions deploy cron-notifier
+```
 
-WHAT NOT TO BUILD YET
-- No real OTP generation/email sending.
-- No ESP32/hardware communication.
-- No real-time reminder/escalation scheduling.
-- No handover or takeover logic beyond static UI placeholders.
-These will be added in a later phase once the base app is scaffolded.
+### 3. Environment Secrets
+Configure the required API secrets in your Supabase project:
+```bash
+npx supabase secrets set RESEND_API_KEY="your_resend_key"
+npx supabase secrets set LOCKER_API_SECRET="your_custom_hardware_password"
+```
 
-Start by scaffolding the project structure, Supabase schema (including the email-restriction trigger), auth flow, and the four main pages/dashboards described above with mock data where noted, styled to match https://crobtkmcee.vercel.app.
+### 4. Webhook Configuration
+1. In your Supabase Dashboard, go to **Database > Webhooks**.
+2. Create a new Webhook targeting the `bookings` table on `INSERT`.
+3. Point it to the URL of your deployed `generate-otp` Edge Function.
 
-This project was built with [Lovable](https://lovable.dev).
+### 5. Local Frontend Development
+```bash
+# Install dependencies
+npm install
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/64d6d200-3c43-42dc-b7c2-6f8cb3b9ebd2).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+# Start the development server
 npm run dev
 ```
+
+---
+
+## 🔌 Hardware (ESP32) Endpoints
+The ESP32 communicates exclusively with the `iot-gateway` Edge Function. 
+
+**Headers Required:**
+```http
+Authorization: Bearer <LOCKER_API_SECRET>
+Content-Type: application/json
+```
+
+**Validate OTP Payload:**
+```json
+{
+  "action": "validate_otp",
+  "otp": "123456",
+  "esp32_id": "MAIN_DOOR_1",
+  "timestamp": "2024-03-20T10:00:00Z"
+}
+```
+
+**Report Event Payload:**
+```json
+{
+  "action": "report_event",
+  "event_type": "key_removed", 
+  "session_id": "<uuid-from-validate-otp-response>",
+  "esp32_id": "MAIN_DOOR_1",
+  "timestamp": "2024-03-20T10:00:05Z",
+  "idempotency_key": "unique-uuid-per-event"
+}
+```
+*(Valid `event_type`s: `locker_opened`, `key_removed`, `key_returned`, `power_restored`)*
