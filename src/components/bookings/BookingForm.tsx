@@ -4,7 +4,7 @@ import { CalendarClock, Loader2, Calendar as CalendarIcon, Clock } from "lucide-
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, setHours, setMinutes, isBefore, startOfDay } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -98,17 +98,64 @@ function DatePickerPopover({ value, onChange }: { value?: Date; onChange: (d?: D
 function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const [h, m] = value && value.includes(":") ? value.split(":") : ["12", "00"];
-  const [selectedHour, setSelectedHour] = useState(h);
-  const [selectedMinute, setSelectedMinute] = useState(m);
+  // Derive initial 12-hour state from 24-hour value
+  let initialH12 = "12";
+  let initialM = "00";
+  let initialAmPm = "AM";
 
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
+  if (value && value.includes(":")) {
+    const [h24, m] = value.split(":");
+    const hNum = parseInt(h24, 10);
+    initialM = m;
+    initialAmPm = hNum >= 12 ? "PM" : "AM";
+    let h12Num = hNum % 12;
+    if (h12Num === 0) h12Num = 12;
+    initialH12 = h12Num.toString();
+  }
+
+  const [selectedHour12, setSelectedHour12] = useState(initialH12);
+  const [selectedMinute, setSelectedMinute] = useState(initialM);
+  const [selectedAmPm, setSelectedAmPm] = useState(initialAmPm);
+
+  // Sync internal state when opened, so it always matches external form value
+  useEffect(() => {
+    if (isOpen && value && value.includes(":")) {
+      const [h24, m] = value.split(":");
+      const hNum = parseInt(h24, 10);
+      setSelectedMinute(m);
+      setSelectedAmPm(hNum >= 12 ? "PM" : "AM");
+      let h12Num = hNum % 12;
+      if (h12Num === 0) h12Num = 12;
+      setSelectedHour12(h12Num.toString());
+    }
+  }, [isOpen, value]);
+
+  const hours12 = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
   const minutes = ["00", "15", "30", "45"];
+  const amPmOptions = ["AM", "PM"];
 
   const handleConfirm = () => {
-    onChange(`${selectedHour}:${selectedMinute}`);
+    let finalHour = parseInt(selectedHour12, 10);
+    if (selectedAmPm === "PM" && finalHour !== 12) {
+      finalHour += 12;
+    } else if (selectedAmPm === "AM" && finalHour === 12) {
+      finalHour = 0;
+    }
+    const finalHourStr = finalHour.toString().padStart(2, "0");
+    onChange(`${finalHourStr}:${selectedMinute}`);
     setIsOpen(false);
   };
+
+  // Format display value for the button
+  let displayValue = "";
+  if (value && value.includes(":")) {
+    const [h24, m2] = value.split(":");
+    const hNum = parseInt(h24, 10);
+    const pm = hNum >= 12;
+    let h12 = hNum % 12;
+    if (h12 === 0) h12 = 12;
+    displayValue = `${h12}:${m2} ${pm ? "PM" : "AM"}`;
+  }
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -122,24 +169,24 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
             )}
           >
             <Clock className="mr-2 h-4 w-4" />
-            {value ? value : <span>Select time</span>}
+            {displayValue ? displayValue : <span>Select time</span>}
           </Button>
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-3 border-border bg-card shadow-lg" align="start">
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <div className="flex flex-col gap-2">
             <span className="text-xs font-semibold text-muted-foreground text-center">Hour</span>
-            <ScrollArea className="h-48 w-16 rounded-md border border-border/50">
+            <ScrollArea className="h-48 w-14 rounded-md border border-border/50">
               <div className="flex flex-col p-1">
-                {hours.map((hour) => (
+                {hours12.map((hour) => (
                   <Button
                     key={hour}
                     type="button"
-                    variant={selectedHour === hour ? "default" : "ghost"}
+                    variant={selectedHour12 === hour ? "default" : "ghost"}
                     size="sm"
-                    className="h-8 w-full text-xs mb-1"
-                    onClick={() => setSelectedHour(hour)}
+                    className="h-8 w-full text-xs mb-1 px-0"
+                    onClick={() => setSelectedHour12(hour)}
                   >
                     {hour}
                   </Button>
@@ -150,7 +197,7 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
 
           <div className="flex flex-col gap-2">
             <span className="text-xs font-semibold text-muted-foreground text-center">Minute</span>
-            <ScrollArea className="h-48 w-16 rounded-md border border-border/50">
+            <ScrollArea className="h-48 w-14 rounded-md border border-border/50">
               <div className="flex flex-col p-1">
                 {minutes.map((minute) => (
                   <Button
@@ -158,7 +205,7 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
                     type="button"
                     variant={selectedMinute === minute ? "default" : "ghost"}
                     size="sm"
-                    className="h-8 w-full text-xs mb-1"
+                    className="h-8 w-full text-xs mb-1 px-0"
                     onClick={() => setSelectedMinute(minute)}
                   >
                     {minute}
@@ -166,6 +213,24 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
                 ))}
               </div>
             </ScrollArea>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold text-muted-foreground text-center">AM/PM</span>
+            <div className="flex flex-col gap-1 p-1 rounded-md border border-border/50 h-48 justify-start">
+              {amPmOptions.map((period) => (
+                <Button
+                  key={period}
+                  type="button"
+                  variant={selectedAmPm === period ? "default" : "ghost"}
+                  size="sm"
+                  className="h-8 w-full text-xs px-0"
+                  onClick={() => setSelectedAmPm(period)}
+                >
+                  {period}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
