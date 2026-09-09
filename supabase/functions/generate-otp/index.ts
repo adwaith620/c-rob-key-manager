@@ -2,9 +2,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
 
 serve(async (req) => {
   try {
+    // 1. Webhook Security Validation
+    // Expecting the Supabase Webhook to pass this in the Authorization header: Bearer <SECRET>
+    const authHeader = req.headers.get("Authorization");
+    if (WEBHOOK_SECRET && authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
+      return new Response("Unauthorized Webhook", { status: 401 });
+    }
+
     // Webhook payload from Supabase
     const payload = await req.json();
     const booking = payload.record;
@@ -14,9 +22,12 @@ serve(async (req) => {
       return new Response("Not an insert", { status: 200 });
     }
 
-    // Generate 6 digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
+    // 2. Cryptographically Secure OTP Generation
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    // Use modulo arithmetic to ensure a 6 digit number between 100000 and 999999
+    const otp = (Math.floor(array[0] % 900000) + 100000).toString();
+
     // Hash the OTP (SHA-256)
     const encoder = new TextEncoder();
     const data = encoder.encode(otp);
@@ -29,7 +40,9 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
     // Get user email
-    const { data: userAuth, error: userError } = await supabaseAdmin.auth.admin.getUserById(booking.user_id);
+    const { data: userAuth, error: userError } = await supabaseAdmin.auth.admin.getUserById(
+      booking.user_id,
+    );
     const email = userAuth?.user?.email;
 
     if (!email || userError) {
@@ -58,20 +71,23 @@ serve(async (req) => {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${RESEND_API_KEY}`,
-          "Content-Type": "application/json"
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "C-ROB Smart Locker <locker@tkmce.ac.in>", // Change if using a different verified domain
+          // TEMPORARY TESTING SENDER: onboarding@resend.dev bypasses domain verification limits
+          // but only works if sending to the verified Resend account owner's email address.
+          // MUST REPLACE WITH A VERIFIED DOMAIN BEFORE PRODUCTION!
+          from: "onboarding@resend.dev",
           to: email,
           subject: "Your C-ROB Locker OTP",
           html: `<p>Your booking has been confirmed.</p>
                  <p>Your one-time password to unlock the locker is: <strong style="font-size:24px;">${otp}</strong></p>
                  <p>It will be valid for exactly 10 minutes starting at <strong>${valid_from.toLocaleString()}</strong>.</p>
-                 <p>Do not share this code.</p>`
-        })
+                 <p>Do not share this code.</p>`,
+        }),
       });
-      
+
       if (!res.ok) {
         console.error("Resend error:", await res.text());
         return new Response("Email failed to send", { status: 500 });

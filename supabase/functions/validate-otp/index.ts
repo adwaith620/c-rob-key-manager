@@ -8,12 +8,18 @@ serve(async (req) => {
     // Basic hardware authorization
     const authHeader = req.headers.get("Authorization");
     if (LOCKER_API_SECRET && authHeader !== `Bearer ${LOCKER_API_SECRET}`) {
-      return new Response(JSON.stringify({ error: "Unauthorized Hardware" }), { status: 401, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Unauthorized Hardware" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const { otp } = await req.json();
     if (!otp || typeof otp !== "string") {
-      return new Response(JSON.stringify({ error: "Missing OTP" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Missing OTP" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -23,7 +29,7 @@ serve(async (req) => {
     // Rate-limiting strategy without booking_id sent from hardware:
     // We check the "currently active" or "soon to be active" bookings directly.
     const now = new Date().toISOString();
-    
+
     // Hash incoming OTP
     const encoder = new TextEncoder();
     const data = encoder.encode(otp);
@@ -41,36 +47,50 @@ serve(async (req) => {
     if (error || !otps || otps.length === 0) {
       // If the code is just wrong, we can't increment attempts on a specific booking because we don't know who is trying.
       // In production, the IoT device might need IP-based rate limiting here to prevent scanning.
-      return new Response(JSON.stringify({ error: "Invalid or expired OTP" }), { status: 401, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Invalid or expired OTP" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const record = otps[0];
 
     // 1. Check Rate Limit
     if (record.locked_until && new Date(record.locked_until) > new Date()) {
-      return new Response(JSON.stringify({ error: "Too many attempts. Locked." }), { status: 429, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Too many attempts. Locked." }), {
+        status: 429,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 2. Check if already used
     if (record.used_at) {
-      return new Response(JSON.stringify({ error: "OTP already used" }), { status: 401, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "OTP already used" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 3. Check if valid_from has passed
     if (new Date(record.valid_from) > new Date()) {
-      return new Response(JSON.stringify({ error: "OTP not yet valid" }), { status: 401, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "OTP not yet valid" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // SUCCESS! Mark as used
-    await supabaseAdmin
-      .from("otps")
-      .update({ used_at: now })
-      .eq("id", record.id);
+    await supabaseAdmin.from("otps").update({ used_at: now }).eq("id", record.id);
 
-    return new Response(JSON.stringify({ success: true, message: "Locker unlocked" }), { status: 200, headers: { "Content-Type": "application/json" } });
-
+    return new Response(JSON.stringify({ success: true, message: "Locker unlocked" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Unexpected error:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 });

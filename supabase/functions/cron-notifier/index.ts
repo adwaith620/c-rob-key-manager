@@ -36,7 +36,7 @@ serve(async (req) => {
 
       const startTime = new Date(booking.start_time);
       const endTime = new Date(startTime.getTime() + booking.duration_hours * 3600000);
-      
+
       const timeRemainingMs = endTime.getTime() - now.getTime();
       const minutesRemaining = timeRemainingMs / 60000;
 
@@ -55,7 +55,7 @@ serve(async (req) => {
         if (!existingReminders || existingReminders.length === 0) {
           // Send reminder
           const msg = `Your C-ROB key session ends in ${Math.ceil(minutesRemaining)} minutes. Please return it to the locker soon.`;
-          
+
           await supabaseAdmin.from("notifications").insert({
             user_id: session.current_holder,
             booking_id: booking.id,
@@ -92,18 +92,18 @@ serve(async (req) => {
 
           if (admins && admins.length > 0) {
             const msg = `ESCALATION: The key has not been returned by ${booking.profiles.full_name}. It is currently ${Math.abs(Math.floor(minutesRemaining))} minutes overdue.`;
-            
-            const notifs = admins.map(admin => ({
+
+            const notifs = admins.map((admin) => ({
               user_id: admin.id,
               booking_id: booking.id,
               type: "escalation",
               message: msg,
             }));
-            
+
             await supabaseAdmin.from("notifications").insert(notifs);
 
             if (RESEND_API_KEY) {
-              const emails = admins.map(a => a.email).filter(Boolean);
+              const emails = admins.map((a) => a.email).filter(Boolean);
               await sendEmail(emails, "URGENT: C-ROB Key Overdue", msg);
             }
             escalationsSent++;
@@ -125,29 +125,43 @@ serve(async (req) => {
     if (!handoverErr && expiredHandovers && expiredHandovers.length > 0) {
       for (const handover of expiredHandovers) {
         // Find the booking_id for this session to satisfy the notifications FK
-        const { data: session } = await supabaseAdmin.from("key_sessions").select("booking_id").eq("id", handover.session_id).single();
+        const { data: session } = await supabaseAdmin
+          .from("key_sessions")
+          .select("booking_id")
+          .eq("id", handover.session_id)
+          .single();
         const bookingId = session?.booking_id || handover.session_id; // Fallback, though FK might fail if strict
 
         // Mark as expired
-        await supabaseAdmin
-          .from("handovers")
-          .update({ status: "expired" })
-          .eq("id", handover.id);
-        
+        await supabaseAdmin.from("handovers").update({ status: "expired" }).eq("id", handover.id);
+
         // Notify sender and receiver
         if (session) {
           await supabaseAdmin.from("notifications").insert([
-            { user_id: handover.from_user_id, booking_id: bookingId, type: "system", message: "Your key handover request has expired." },
-            { user_id: handover.to_user_id, booking_id: bookingId, type: "system", message: "A key handover request sent to you has expired." }
+            {
+              user_id: handover.from_user_id,
+              booking_id: bookingId,
+              type: "system",
+              message: "Your key handover request has expired.",
+            },
+            {
+              user_id: handover.to_user_id,
+              booking_id: bookingId,
+              type: "system",
+              message: "A key handover request sent to you has expired.",
+            },
           ]);
         }
         handoversExpired++;
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, remindersSent, escalationsSent, handoversExpired }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ ok: true, remindersSent, escalationsSent, handoversExpired }),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response("Internal Server Error", { status: 500 });
@@ -158,15 +172,18 @@ async function sendEmail(to: string | string[], subject: string, text: string) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
-      "Content-Type": "application/json"
+      Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "C-ROB Smart Locker <locker@tkmce.ac.in>", // Verify this domain
+      // TEMPORARY TESTING SENDER: onboarding@resend.dev bypasses domain verification limits
+      // but only works if sending to the verified Resend account owner's email address.
+      // MUST REPLACE WITH A VERIFIED DOMAIN BEFORE PRODUCTION!
+      from: "onboarding@resend.dev",
       to: Array.isArray(to) ? to : [to],
       subject: subject,
-      html: `<p>${text}</p>`
-    })
+      html: `<p>${text}</p>`,
+    }),
   });
   if (!res.ok) {
     console.error("Resend error:", await res.text());
