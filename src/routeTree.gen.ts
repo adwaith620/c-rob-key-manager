@@ -10,14 +10,27 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ExecomRouteImport } from './routes/execom'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MemberRouteImport } from './routes/member'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExecomRoute = ExecomRouteImport.update({
+  id: '/execom',
+  path: '/execom',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -28,6 +41,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MemberRoute = MemberRouteImport.update({
+  id: '/member',
+  path: '/member',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -43,45 +61,75 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/execom': typeof ExecomRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/execom': typeof ExecomRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/execom': typeof ExecomRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/forgot-password' | '/login' | '/register' | '/reset-password'
+    | '/'
+    | '/admin'
+    | '/execom'
+    | '/forgot-password'
+    | '/login'
+    | '/member'
+    | '/register'
+    | '/reset-password'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/forgot-password' | '/login' | '/register' | '/reset-password'
+  to:
+    | '/'
+    | '/admin'
+    | '/execom'
+    | '/forgot-password'
+    | '/login'
+    | '/member'
+    | '/register'
+    | '/reset-password'
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/execom'
     | '/forgot-password'
     | '/login'
+    | '/member'
     | '/register'
     | '/reset-password'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ExecomRoute: typeof ExecomRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  MemberRoute: typeof MemberRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
 }
@@ -93,6 +141,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/execom': {
+      id: '/execom'
+      path: '/execom'
+      fullPath: '/execom'
+      preLoaderRoute: typeof ExecomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -107,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/member': {
+      id: '/member'
+      path: '/member'
+      fullPath: '/member'
+      preLoaderRoute: typeof MemberRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -128,8 +197,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ExecomRoute: ExecomRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  MemberRoute: MemberRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
 }
