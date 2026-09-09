@@ -27,58 +27,40 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
-  startTime: z
-    .string()
-    .min(1, "Start time is required")
-    .refine(
-      (val) => {
-        // Check if the selected time is in the future (allowing a 5-minute buffer)
-        const selected = new Date(val).getTime();
-        const now = new Date().getTime() - 5 * 60 * 1000;
-        return selected > now;
-      },
-      { message: "Start time must be in the future" },
-    ),
-  durationHours: z.string().min(1, "Duration is required"),
-});
+const formSchema = z
+  .object({
+    date: z.date({
+      required_error: "Date is required",
+    }),
+    time: z
+      .string({
+        required_error: "Time is required",
+      })
+      .min(1, "Time is required"),
+    durationHours: z.string().min(1, "Duration is required"),
+  })
+  .refine(
+    (data) => {
+      if (!data.date || !data.time) return false;
+      const [hours, minutes] = data.time.split(":");
+      const combined = setMinutes(
+        setHours(new Date(data.date), parseInt(hours, 10)),
+        parseInt(minutes, 10),
+      );
+      const selected = combined.getTime();
+      const now = new Date().getTime() - 5 * 60 * 1000;
+      return selected > now;
+    },
+    { message: "Start time must be in the future", path: ["time"] },
+  );
 
-function DateTimePicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function DatePickerPopover({ value, onChange }: { value?: Date; onChange: (d?: Date) => void }) {
   const [isOpen, setIsOpen] = useState(false);
-
-  const selectedDate = value ? new Date(value) : undefined;
-
-  const handleDateSelect = (d: Date | undefined) => {
-    if (!d) return;
-    let newDate = d;
-    if (selectedDate) {
-      newDate = setHours(newDate, selectedDate.getHours());
-      newDate = setMinutes(newDate, selectedDate.getMinutes());
-    } else {
-      const now = new Date();
-      newDate = setHours(newDate, now.getHours() + 1);
-      newDate = setMinutes(newDate, 0);
-    }
-    onChange(newDate.toISOString());
-  };
-
-  const handleTimeChange = (type: "hour" | "minute", val: string) => {
-    if (!selectedDate) return;
-    let newDate = new Date(selectedDate);
-    if (type === "hour") {
-      newDate = setHours(newDate, parseInt(val, 10));
-    } else {
-      newDate = setMinutes(newDate, parseInt(val, 10));
-    }
-    onChange(newDate.toISOString());
-  };
-
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
-  const minutes = ["00", "15", "30", "45"];
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -92,69 +74,104 @@ function DateTimePicker({ value, onChange }: { value: string; onChange: (value: 
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {value ? (
-              format(selectedDate!, "MMM d, yyyy - h:mm a")
-            ) : (
-              <span>Select date and time</span>
-            )}
+            {value ? format(value, "d MMMM yyyy") : <span>Select date</span>}
           </Button>
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 border-border bg-card shadow-lg" align="start">
         <Calendar
           mode="single"
-          selected={selectedDate}
-          onSelect={handleDateSelect}
+          selected={value}
+          onSelect={(d) => {
+            onChange(d);
+            setIsOpen(false);
+          }}
           disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
           initialFocus
-          className="rounded-t-md border-b border-border/10"
+          className="rounded-md border border-border/10"
         />
-        <div className="p-3 bg-muted/10 flex flex-col gap-2 rounded-b-md">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Start Time</span>
-          </div>
-          <div className="flex gap-2">
-            <Select
-              disabled={!selectedDate}
-              value={selectedDate ? selectedDate.getHours().toString().padStart(2, "0") : undefined}
-              onValueChange={(v) => handleTimeChange("hour", v)}
-            >
-              <SelectTrigger className="flex-1 h-9 bg-background">
-                <SelectValue placeholder="Hour" />
-              </SelectTrigger>
-              <SelectContent>
-                {hours.map((h) => (
-                  <SelectItem key={h} value={h}>
-                    {h}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span className="text-muted-foreground flex items-center">:</span>
-            <Select
-              disabled={!selectedDate}
-              value={
-                selectedDate ? selectedDate.getMinutes().toString().padStart(2, "0") : undefined
-              }
-              onValueChange={(v) => handleTimeChange("minute", v)}
-            >
-              <SelectTrigger className="flex-1 h-9 bg-background">
-                <SelectValue placeholder="Min" />
-              </SelectTrigger>
-              <SelectContent>
-                {minutes.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button size="sm" className="mt-2 w-full" onClick={() => setIsOpen(false)}>
-            Confirm
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [h, m] = value && value.includes(":") ? value.split(":") : ["12", "00"];
+  const [selectedHour, setSelectedHour] = useState(h);
+  const [selectedMinute, setSelectedMinute] = useState(m);
+
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
+  const minutes = ["00", "15", "30", "45"];
+
+  const handleConfirm = () => {
+    onChange(`${selectedHour}:${selectedMinute}`);
+    setIsOpen(false);
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <FormControl>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground",
+              !value && "text-muted-foreground",
+            )}
+          >
+            <Clock className="mr-2 h-4 w-4" />
+            {value ? value : <span>Select time</span>}
           </Button>
+        </FormControl>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3 border-border bg-card shadow-lg" align="start">
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold text-muted-foreground text-center">Hour</span>
+            <ScrollArea className="h-48 w-16 rounded-md border border-border/50">
+              <div className="flex flex-col p-1">
+                {hours.map((hour) => (
+                  <Button
+                    key={hour}
+                    type="button"
+                    variant={selectedHour === hour ? "default" : "ghost"}
+                    size="sm"
+                    className="h-8 w-full text-xs mb-1"
+                    onClick={() => setSelectedHour(hour)}
+                  >
+                    {hour}
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold text-muted-foreground text-center">Minute</span>
+            <ScrollArea className="h-48 w-16 rounded-md border border-border/50">
+              <div className="flex flex-col p-1">
+                {minutes.map((minute) => (
+                  <Button
+                    key={minute}
+                    type="button"
+                    variant={selectedMinute === minute ? "default" : "ghost"}
+                    size="sm"
+                    className="h-8 w-full text-xs mb-1"
+                    onClick={() => setSelectedMinute(minute)}
+                  >
+                    {minute}
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
         </div>
+
+        <Button type="button" size="sm" className="mt-4 w-full" onClick={handleConfirm}>
+          Confirm
+        </Button>
       </PopoverContent>
     </Popover>
   );
@@ -167,7 +184,7 @@ export function BookingForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      startTime: "",
+      time: "",
       durationHours: "1",
     },
   });
@@ -176,7 +193,11 @@ export function BookingForm() {
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       if (!user || !supabase) throw new Error("Not authenticated");
 
-      const localDate = new Date(values.startTime);
+      const [hours, minutes] = values.time.split(":");
+      const localDate = setMinutes(
+        setHours(new Date(values.date), parseInt(hours, 10)),
+        parseInt(minutes, 10),
+      );
       const isoString = localDate.toISOString(); // converts to UTC
 
       const { data, error } = await supabase
@@ -197,7 +218,7 @@ export function BookingForm() {
     },
     onSuccess: () => {
       toast.success("Booking created successfully!");
-      form.reset({ startTime: "", durationHours: "1" });
+      form.reset({ time: "", durationHours: "1" });
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error: Error) => {
@@ -224,16 +245,30 @@ export function BookingForm() {
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="startTime"
+                name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Start Time</FormLabel>
-                    <DateTimePicker value={field.value} onChange={field.onChange} />
+                    <FormLabel>Date</FormLabel>
+                    <DatePickerPopover value={field.value} onChange={field.onChange} />
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Time</FormLabel>
+                    <TimePickerPopover value={field.value} onChange={field.onChange} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4">
               <FormField
                 control={form.control}
                 name="durationHours"
