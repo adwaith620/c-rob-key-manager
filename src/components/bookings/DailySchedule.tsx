@@ -1,13 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { format, addDays, subDays, isSameDay, startOfDay, endOfDay, isBefore } from "date-fns";
+import {
+  format,
+  addDays,
+  subDays,
+  isSameDay,
+  startOfDay,
+  endOfDay,
+  isBefore,
+  isTomorrow,
+} from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 export function DailySchedule() {
   const { user } = useAuth();
@@ -28,7 +38,6 @@ export function DailySchedule() {
       const rangeEnd = endOfDay(selectedDate).toISOString();
 
       // Uses the secure RPC function to fetch minimal public info (names and times)
-      // without exposing sensitive profile data or violating RLS.
       const { data, error } = await supabase.rpc("get_schedule_in_range", {
         range_start: rangeStart,
         range_end: rangeEnd,
@@ -53,14 +62,47 @@ export function DailySchedule() {
   const visibleBookings = expanded ? schedule : schedule?.slice(0, 3);
   const hasMore = schedule && schedule.length > 3;
 
+  let titleText = "";
+  if (isToday) {
+    titleText = "Today's Bookings";
+  } else if (isTomorrow(selectedDate)) {
+    titleText = `Tomorrow — ${format(selectedDate, "MMM d")}`;
+  } else {
+    titleText = format(selectedDate, "MMM d");
+  }
+
   return (
     <Card className="flex flex-col h-full bg-card/50">
-      <CardHeader className="pb-3 border-b border-border/10">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <CalendarIcon className="size-4" />
-            {isToday ? "Today's Bookings" : `Bookings — ${format(selectedDate, "d MMMM")}`}
-          </CardTitle>
+      <CardHeader className="pb-2 pt-4 border-b border-border/10">
+        <div className="flex items-center justify-center relative w-full">
+          <div className="absolute left-0 flex items-center justify-center">
+            <CalendarIcon className="size-4 text-muted-foreground" />
+          </div>
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-7 w-7 text-muted-foreground hover:text-foreground transition-opacity",
+                !canGoBack && "opacity-0 pointer-events-none",
+              )}
+              onClick={handlePrevDay}
+              disabled={!canGoBack}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="text-sm font-semibold min-w-[150px] text-center select-none">
+              {titleText}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              onClick={handleNextDay}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1 flex flex-col">
@@ -121,26 +163,6 @@ export function DailySchedule() {
             </div>
           )}
         </div>
-
-        {(expanded || !isToday) && (
-          <div className="p-3 border-t border-border/10 bg-muted/10 flex items-center justify-between mt-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handlePrevDay}
-              disabled={!canGoBack}
-              className="text-xs"
-            >
-              <ChevronLeft className="mr-1 size-3" /> Previous
-            </Button>
-            <div className="text-xs font-medium text-muted-foreground">
-              {format(selectedDate, "MMM d, yyyy")}
-            </div>
-            <Button variant="ghost" size="sm" onClick={handleNextDay} className="text-xs">
-              Next <ChevronRight className="ml-1 size-3" />
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
