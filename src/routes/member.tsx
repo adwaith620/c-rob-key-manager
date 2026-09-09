@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import { AppShell, PageHeading } from "@/components/AppShell";
 import { BookingForm } from "@/components/bookings/BookingForm";
@@ -6,15 +7,47 @@ import { BookingList } from "@/components/bookings/BookingList";
 import { CurrentSession } from "@/components/bookings/CurrentSession";
 import { GlobalKeyStatus } from "@/components/GlobalKeyStatus";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/member")({
+  ssr: false,
   component: MemberDashboard,
 });
 
 function MemberDashboard() {
   const { user, profile, loading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    // Check if the URL hash contains an OAuth error from Supabase
+    // (e.g. the Postgres trigger rejected a non-@tkmce.ac.in email)
+    const hash = window.location.hash;
+    if (hash && hash.includes("error_description=")) {
+      const params = new URLSearchParams(hash.substring(1));
+      const errorDesc = params.get("error_description");
+      if (errorDesc) {
+        setAuthError(decodeURIComponent(errorDesc).replace(/\+/g, " "));
+        // Clean the URL hash so it doesn't persist on refresh
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    }
+    setChecking(false);
+  }, []);
+
+  // If Supabase returned an OAuth error (non-TKMCE email rejected by DB trigger),
+  // sign out any partial session and redirect to the access-denied page.
+  useEffect(() => {
+    if (authError && supabase) {
+      supabase.auth.signOut();
+    }
+  }, [authError]);
+
+  if (authError) {
+    return <Navigate to="/access-denied" replace />;
+  }
+
+  if (loading || checking) {
     return (
       <AppShell>
         <div className="flex h-[50vh] items-center justify-center text-muted-foreground">
