@@ -5,6 +5,7 @@ import { AppShell, PageHeading } from "@/components/AppShell";
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { BookingList } from "@/components/bookings/BookingList";
 import { CurrentSession } from "@/components/bookings/CurrentSession";
+import { DailySchedule } from "@/components/bookings/DailySchedule";
 import { GlobalKeyStatus } from "@/components/GlobalKeyStatus";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -75,8 +76,9 @@ function MemberDashboard() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div>
+        <div className="space-y-8">
           <BookingForm />
+          <DailySchedule />
         </div>
         <div>
           <BookingList />

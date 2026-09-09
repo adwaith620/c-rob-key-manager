@@ -330,3 +330,35 @@ select cron.schedule(
   $$
 );
 */
+
+
+-- 5. Secure Schedule Access ----------------------------------------------------
+-- Safely exposes minimal booking and profile info for the Daily Schedule view.
+create or replace function public.get_schedule_in_range(range_start timestamptz, range_end timestamptz)
+returns table (
+  id uuid,
+  start_time timestamptz,
+  duration_hours int,
+  status text,
+  user_id uuid,
+  full_name text
+)
+language sql
+security definer
+set search_path = public
+as $function
+  select 
+    b.id,
+    b.start_time,
+    b.duration_hours,
+    b.status,
+    b.user_id,
+    p.full_name
+  from public.bookings b
+  join public.profiles p on b.user_id = p.id
+  where b.start_time >= range_start 
+    and b.start_time < range_end
+    and b.status in ('pending', 'confirmed')
+  order by b.start_time asc;
+$function;
+
