@@ -94,7 +94,7 @@ export function DailySchedule() {
                         {format(start, "hh:mm a")} – {format(end, "hh:mm a")}
                       </div>
                       <div className="text-sm text-muted-foreground font-medium flex items-center gap-2">
-                        {booking.full_name?.split(" ")[0] || "Member"}
+                        {booking.first_name || "Member"}
                         {isOwnBooking && (
                           <Badge variant="outline" className="text-[10px] h-4 px-1 py-0">
                             You

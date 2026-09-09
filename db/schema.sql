@@ -334,6 +334,10 @@ select cron.schedule(
 
 -- 5. Secure Schedule Access ----------------------------------------------------
 -- Safely exposes minimal booking and profile info for the Daily Schedule view.
+-- Security hardened to expose only first_name and explicitly restrict execute.
+
+drop function if exists public.get_schedule_in_range(timestamptz, timestamptz);
+
 create or replace function public.get_schedule_in_range(range_start timestamptz, range_end timestamptz)
 returns table (
   id uuid,
@@ -341,7 +345,7 @@ returns table (
   duration_hours int,
   status text,
   user_id uuid,
-  full_name text
+  first_name text
 )
 language sql
 security definer
@@ -353,7 +357,7 @@ as $function
     b.duration_hours,
     b.status,
     b.user_id,
-    p.full_name
+    split_part(p.full_name, ' ', 1) as first_name
   from public.bookings b
   join public.profiles p on b.user_id = p.id
   where b.start_time >= range_start 
@@ -361,4 +365,12 @@ as $function
     and b.status in ('pending', 'confirmed')
   order by b.start_time asc;
 $function;
+
+-- Prevent unauthenticated access
+revoke execute on function public.get_schedule_in_range(timestamptz, timestamptz) from public;
+revoke execute on function public.get_schedule_in_range(timestamptz, timestamptz) from anon;
+
+-- Allow authenticated users to fetch the schedule
+grant execute on function public.get_schedule_in_range(timestamptz, timestamptz) to authenticated;
+grant execute on function public.get_schedule_in_range(timestamptz, timestamptz) to service_role;
 
