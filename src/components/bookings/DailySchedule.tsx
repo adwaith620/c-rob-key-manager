@@ -72,7 +72,7 @@ export function DailySchedule() {
   }
 
   return (
-    <Card className="flex flex-col h-full bg-card/50">
+    <Card className="panel flex flex-col h-full opacity-90 transition-all hover:opacity-100">
       <CardHeader className="pb-2 pt-4 border-b border-border/10">
         <div className="flex items-center justify-center relative w-full">
           <div className="absolute left-0 flex items-center justify-center">

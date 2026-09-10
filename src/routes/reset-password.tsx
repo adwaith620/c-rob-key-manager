@@ -98,7 +98,7 @@ function ResetPasswordPage() {
               {error}
             </p>
           ) : null}
-          <Button type="submit" className="w-full" disabled={busy}>
+          <Button type="submit" variant="crobPrimary" glow className="w-full" disabled={busy}>
             {busy ? "Updating…" : "Update password"}
           </Button>
         </form>

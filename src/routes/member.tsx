@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { AnimatedSection, GradientText } from "@/components/crob";
 import { AppShell, PageHeading } from "@/components/AppShell";
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { BookingList } from "@/components/bookings/BookingList";
@@ -21,23 +22,18 @@ function MemberDashboard() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Check if the URL hash contains an OAuth error from Supabase
-    // (e.g. the Postgres trigger rejected a non-@tkmce.ac.in email)
     const hash = window.location.hash;
     if (hash && hash.includes("error_description=")) {
       const params = new URLSearchParams(hash.substring(1));
       const errorDesc = params.get("error_description");
       if (errorDesc) {
         setAuthError(decodeURIComponent(errorDesc).replace(/\+/g, " "));
-        // Clean the URL hash so it doesn't persist on refresh
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
       }
     }
     setChecking(false);
   }, []);
 
-  // If Supabase returned an OAuth error (non-TKMCE email rejected by DB trigger),
-  // sign out any partial session and redirect to the access-denied page.
   useEffect(() => {
     if (authError && supabase) {
       supabase.auth.signOut();
@@ -52,13 +48,12 @@ function MemberDashboard() {
     return (
       <AppShell>
         <div className="flex h-[50vh] items-center justify-center text-muted-foreground">
-          Loading dashboard...
+          <div className="animate-pulse">Loading dashboard...</div>
         </div>
       </AppShell>
     );
   }
 
-  // Basic route protection
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -66,23 +61,27 @@ function MemberDashboard() {
   return (
     <AppShell>
       <PageHeading
-        title={`Welcome, ${profile?.full_name?.split(" ")[0] || "Member"}`}
+        title={
+          <>
+            Welcome, <GradientText>{profile?.full_name?.split(" ")[0] || "Member"}</GradientText>
+          </>
+        }
         subtitle="Manage your key access and view session history."
         right={<GlobalKeyStatus />}
       />
 
-      <div className="mb-8">
+      <AnimatedSection animation="fade-in" delay={100} className="mb-8">
         <CurrentSession />
-      </div>
+      </AnimatedSection>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-8">
+        <AnimatedSection animation="fade-in" delay={200} className="space-y-8">
           <BookingForm />
           <DailySchedule />
-        </div>
-        <div>
+        </AnimatedSection>
+        <AnimatedSection animation="fade-in" delay={300}>
           <BookingList />
-        </div>
+        </AnimatedSection>
       </div>
     </AppShell>
   );

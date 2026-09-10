@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShieldX, ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CrobBackground, CrobLogo, GradientText } from "@/components/crob";
 
 export const Route = createFileRoute("/access-denied")({
   ssr: false,
@@ -19,27 +20,35 @@ export const Route = createFileRoute("/access-denied")({
 
 function AccessDeniedPage() {
   return (
-    <div className="grid-lines flex min-h-screen items-center justify-center px-5 py-12">
-      <div className="w-full max-w-md text-center">
-        {/* Icon */}
-        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl border border-destructive/30 bg-destructive/10">
-          <ShieldX className="size-8 text-destructive" />
+    <div className="relative flex min-h-screen items-center justify-center px-5 py-12">
+      <CrobBackground variant="auth" />
+
+      <div className="relative z-10 w-full max-w-md text-center animate-fade-up">
+        {/* Logo */}
+        <div className="mb-8 flex justify-center">
+          <CrobLogo size="sm" />
+        </div>
+
+        {/* Error Icon */}
+        <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-2xl border border-destructive/30 bg-gradient-to-br from-destructive/20 to-destructive/5">
+          <ShieldX className="size-10 text-destructive" />
         </div>
 
         {/* Heading */}
-        <h1 className="text-2xl font-bold tracking-tight">Oops! TKMCE account required</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">
+          <GradientText>TKMCE</GradientText> account required
+        </h1>
 
         {/* Body */}
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          This portal is exclusively for C-ROB members of TKMCE.
+          This portal is exclusively for C-ROB members of TKM College of Engineering.
         </p>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Please sign in using your official TKMCE email ID ending with{" "}
-          <strong className="text-foreground">@tkmce.ac.in</strong>.
+          Please sign in using your official TKMCE account.
         </p>
 
         {/* CTA */}
-        <Button asChild className="mt-8 w-full h-11" variant="default">
+        <Button asChild className="glow mt-8 w-full h-12 text-base" variant="default">
           <Link to="/login">
             <ArrowLeft className="mr-2 size-4" />
             Return to Login

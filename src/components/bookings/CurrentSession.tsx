@@ -108,7 +108,7 @@ export function CurrentSession() {
   const initiateHandover = useMutation({
     mutationFn: async () => {
       if (!handoverEmail || !heldSession || !user) throw new Error("Missing data");
-      
+
       const { data: recipient, error: recErr } = await supabase!
         .from("profiles")
         .select("id")
@@ -124,11 +124,12 @@ export function CurrentSession() {
         from_user_id: user.id,
         to_user_id: recipient.id,
         status: "pending_acceptance",
-        expires_at: expiresAt
+        expires_at: expiresAt,
       });
 
       if (insErr) {
-        if (insErr.code === "23505") throw new Error("A handover is already pending for this session.");
+        if (insErr.code === "23505")
+          throw new Error("A handover is already pending for this session.");
         throw new Error("Failed to initiate handover");
       }
     },
@@ -138,23 +139,37 @@ export function CurrentSession() {
       setHandoverError("");
       queryClient.invalidateQueries({ queryKey: ["handovers", user?.id] });
     },
-    onError: (e: any) => setHandoverError(e.message)
+    onError: (e: any) => setHandoverError(e.message),
   });
 
   const respondToHandover = useMutation({
-    mutationFn: async ({ id, action, sessionId }: { id: string; action: "completed" | "rejected" | "cancelled", sessionId: string }) => {
-      const { error: updErr } = await supabase!.from("handovers").update({ status: action }).eq("id", id);
+    mutationFn: async ({
+      id,
+      action,
+      sessionId,
+    }: {
+      id: string;
+      action: "completed" | "rejected" | "cancelled";
+      sessionId: string;
+    }) => {
+      const { error: updErr } = await supabase!
+        .from("handovers")
+        .update({ status: action })
+        .eq("id", id);
       if (updErr) throw updErr;
 
       if (action === "completed") {
         // Transfer custody
-        await supabase!.from("key_sessions").update({ current_holder: user!.id }).eq("id", sessionId);
+        await supabase!
+          .from("key_sessions")
+          .update({ current_holder: user!.id })
+          .eq("id", sessionId);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["handovers", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["held_session", user?.id] });
-    }
+    },
   });
 
   if (loadingHeld || loadingUpcoming) return null;
@@ -166,12 +181,32 @@ export function CurrentSession() {
         <ArrowRightLeft className="size-5 text-primary" />
         <AlertTitle className="text-primary font-bold text-base">Key Handover Request</AlertTitle>
         <AlertDescription className="mt-2">
-          <strong>{(pendingHandover.from_profile as any)?.full_name}</strong> wants to physically hand over the C-ROB key to you. Do you accept custody?
+          <strong>{(pendingHandover.from_profile as any)?.full_name}</strong> wants to physically
+          hand over the C-ROB key to you. Do you accept custody?
           <div className="mt-3 flex gap-3">
-            <Button size="sm" onClick={() => respondToHandover.mutate({ id: pendingHandover.id, action: "completed", sessionId: pendingHandover.session_id })}>
+            <Button
+              size="sm"
+              onClick={() =>
+                respondToHandover.mutate({
+                  id: pendingHandover.id,
+                  action: "completed",
+                  sessionId: pendingHandover.session_id,
+                })
+              }
+            >
               Accept Key
             </Button>
-            <Button size="sm" variant="outline" onClick={() => respondToHandover.mutate({ id: pendingHandover.id, action: "rejected", sessionId: pendingHandover.session_id })}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                respondToHandover.mutate({
+                  id: pendingHandover.id,
+                  action: "rejected",
+                  sessionId: pendingHandover.session_id,
+                })
+              }
+            >
               Decline
             </Button>
           </div>
@@ -188,23 +223,32 @@ export function CurrentSession() {
 
   const start = new Date(activeBooking.start_time);
   const end = addHours(start, activeBooking.duration_hours);
-  const timeRemaining = isAfter(now, start) ? formatDistanceToNow(end) : `Starts in ${formatDistanceToNow(start)}`;
+  const timeRemaining = isAfter(now, start)
+    ? formatDistanceToNow(end)
+    : `Starts in ${formatDistanceToNow(start)}`;
 
   return (
-    <Card className="border-primary/50 bg-primary/5 shadow-md">
-      <CardHeader className="pb-3">
+    <Card className="panel border-primary/40 bg-card/60 shadow-md relative overflow-hidden transition-all duration-300 hover:border-primary/60">
+      <div className="absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+      <CardHeader className="pb-3 relative z-10">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-primary flex items-center gap-2">
               <KeyRound className="size-5" />
-              {heldSession ? "Active Key Custody" : isAfter(now, start) ? "Active Booking" : "Upcoming Booking"}
+              {heldSession
+                ? "Active Key Custody"
+                : isAfter(now, start)
+                  ? "Active Booking"
+                  : "Upcoming Booking"}
             </CardTitle>
             <CardDescription className="text-foreground/80 mt-1">
               {format(start, "h:mm a")} – {format(end, "h:mm a")}
             </CardDescription>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold tracking-tight">{heldSession || isAfter(now, start) ? "In Progress" : "Soon"}</div>
+            <div className="text-2xl font-bold tracking-tight">
+              {heldSession || isAfter(now, start) ? "In Progress" : "Soon"}
+            </div>
             <div className="text-xs font-medium text-muted-foreground flex items-center justify-end gap-1">
               <Clock className="size-3" />
               {timeRemaining}
@@ -220,16 +264,34 @@ export function CurrentSession() {
               <AlertTitle>You have the key</AlertTitle>
               <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
                 <span>Please return it to the locker before the session ends.</span>
-                
+
                 {pendingHandover?.from_user_id === user?.id ? (
                   <div className="flex items-center gap-2 bg-background/50 rounded-md p-1.5 border">
-                    <span className="text-xs font-medium">Waiting for {(pendingHandover.to_profile as any)?.full_name} to accept...</span>
-                    <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive hover:text-destructive" onClick={() => respondToHandover.mutate({ id: pendingHandover.id, action: "cancelled", sessionId: pendingHandover.session_id })}>
+                    <span className="text-xs font-medium">
+                      Waiting for {(pendingHandover.to_profile as any)?.full_name} to accept...
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs text-destructive hover:text-destructive"
+                      onClick={() =>
+                        respondToHandover.mutate({
+                          id: pendingHandover.id,
+                          action: "cancelled",
+                          sessionId: pendingHandover.session_id,
+                        })
+                      }
+                    >
                       Cancel
                     </Button>
                   </div>
                 ) : (
-                  <Button size="sm" variant="outline" className="bg-background/50 border-green-500/30 hover:bg-green-500/20" onClick={() => setIsHandoverOpen(true)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-background/50 border-green-500/30 hover:bg-green-500/20"
+                    onClick={() => setIsHandoverOpen(true)}
+                  >
                     <ArrowRightLeft className="mr-2 size-4" />
                     Handover Key
                   </Button>
@@ -249,7 +311,8 @@ export function CurrentSession() {
               <AlertCircle className="size-4" />
               <AlertTitle>Locker Temporarily Locked</AlertTitle>
               <AlertDescription>
-                Too many incorrect PIN attempts. The keypad is locked until {format(new Date(otpStatus.locked_until), "h:mm a")}.
+                Too many incorrect PIN attempts. The keypad is locked until{" "}
+                {format(new Date(otpStatus.locked_until), "h:mm a")}.
               </AlertDescription>
             </Alert>
           ) : isAfter(now, start) ? (
@@ -257,7 +320,8 @@ export function CurrentSession() {
               <AlertCircle className="size-4" color="currentColor" />
               <AlertTitle>Action Required</AlertTitle>
               <AlertDescription>
-                Your session has started. Check your college email for the 6-digit OTP to unlock the hardware locker.
+                Your session has started. Check your college email for the 6-digit OTP to unlock the
+                hardware locker.
               </AlertDescription>
             </Alert>
           ) : (
@@ -273,7 +337,8 @@ export function CurrentSession() {
           <DialogHeader>
             <DialogTitle>Handover Key</DialogTitle>
             <DialogDescription>
-              Transfer physical custody of the key to another registered member. They will have 10 minutes to accept.
+              Transfer physical custody of the key to another registered member. They will have 10
+              minutes to accept.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -289,7 +354,9 @@ export function CurrentSession() {
             {handoverError && <p className="text-sm text-destructive">{handoverError}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsHandoverOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsHandoverOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={() => initiateHandover.mutate()} disabled={initiateHandover.isPending}>
               {initiateHandover.isPending ? "Sending..." : "Send Request"}
             </Button>

@@ -22,7 +22,11 @@ export function BookingList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: bookings, isLoading, error } = useQuery({
+  const {
+    data: bookings,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["bookings", user?.id],
     queryFn: async () => {
       if (!user || !supabase) return [];
@@ -57,22 +61,37 @@ export function BookingList() {
   });
 
   if (isLoading) {
-    return <div className="py-8 text-center text-muted-foreground"><Loader2 className="mx-auto size-6 animate-spin" /></div>;
+    return (
+      <div className="py-8 text-center text-muted-foreground">
+        <Loader2 className="mx-auto size-6 animate-spin" />
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="py-8 text-center text-red-500">Failed to load bookings: {error.message}</div>;
+    return (
+      <div className="py-8 text-center text-red-500">Failed to load bookings: {error.message}</div>
+    );
   }
 
   const now = new Date();
-  const upcoming = bookings?.filter((b) => new Date(b.start_time) > now && b.status !== "cancelled" && b.status !== "completed") || [];
-  const past = bookings?.filter((b) => new Date(b.start_time) <= now || b.status === "cancelled" || b.status === "completed").reverse() || [];
+  const upcoming =
+    bookings?.filter(
+      (b) => new Date(b.start_time) > now && b.status !== "cancelled" && b.status !== "completed",
+    ) || [];
+  const past =
+    bookings
+      ?.filter(
+        (b) =>
+          new Date(b.start_time) <= now || b.status === "cancelled" || b.status === "completed",
+      )
+      .reverse() || [];
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="panel">
         <CardHeader>
-          <CardTitle>Upcoming Bookings</CardTitle>
+          <CardTitle className="text-primary">Upcoming Bookings</CardTitle>
           <CardDescription>Your scheduled key access slots.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -81,22 +100,32 @@ export function BookingList() {
           ) : (
             <div className="space-y-4">
               {upcoming.map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between rounded-lg border p-4">
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between rounded-lg border border-border/50 bg-card/40 p-4 transition-colors hover:bg-card/60"
+                >
                   <div>
-                    <div className="font-medium">
+                    <div className="font-medium text-foreground">
                       {format(new Date(booking.start_time), "PPP 'at' p")}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground mt-0.5">
                       Duration: {booking.duration_hours} hour{booking.duration_hours > 1 ? "s" : ""}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={booking.status === "confirmed" ? "default" : "secondary"}>
+                    <Badge
+                      className={
+                        booking.status === "confirmed"
+                          ? "bg-primary/20 text-primary border-primary/30"
+                          : "bg-warning/20 text-warning border-warning/30"
+                      }
+                      variant="outline"
+                    >
                       {booking.status}
                     </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => {
                         if (confirm("Are you sure you want to cancel this booking?")) {
@@ -115,7 +144,7 @@ export function BookingList() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="panel opacity-80">
         <CardHeader>
           <CardTitle>Past & Cancelled</CardTitle>
         </CardHeader>
@@ -125,16 +154,21 @@ export function BookingList() {
           ) : (
             <div className="space-y-3">
               {past.map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between rounded-lg border p-3 opacity-70">
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between rounded-lg border border-border/30 bg-card/20 p-3"
+                >
                   <div>
-                    <div className="text-sm font-medium">
+                    <div className="text-sm font-medium text-foreground/80">
                       {format(new Date(booking.start_time), "PPP 'at' p")}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       {booking.duration_hours} hr{booking.duration_hours > 1 ? "s" : ""}
                     </div>
                   </div>
-                  <Badge variant="outline">{booking.status}</Badge>
+                  <Badge variant="outline" className="text-muted-foreground border-border/50">
+                    {booking.status}
+                  </Badge>
                 </div>
               ))}
             </div>

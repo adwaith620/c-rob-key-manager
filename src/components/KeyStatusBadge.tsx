@@ -5,7 +5,10 @@ export type KeyStatus = "available" | "booked" | "key-out";
 const MAP: Record<KeyStatus, { label: string; className: string }> = {
   available: { label: "Available", className: "bg-success/15 text-success border-success/40" },
   booked: { label: "Booked", className: "bg-warning/15 text-warning border-warning/40" },
-  "key-out": { label: "Key Out", className: "bg-destructive/15 text-destructive border-destructive/40" },
+  "key-out": {
+    label: "Key Out",
+    className: "bg-destructive/15 text-destructive border-destructive/40",
+  },
 };
 
 export function KeyStatusBadge({ status, className }: { status: KeyStatus; className?: string }) {

@@ -25,7 +25,7 @@ export function GlobalKeyStatus() {
       // Since duration_hours isn't easily searchable via simple eq() in supabase without an RPC,
       // we'll fetch today's bookings and do the math, or we can just fetch pending/confirmed.
       const today = new Date();
-      const startOfDay = new Date(today.setHours(0,0,0,0)).toISOString();
+      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const { data: activeBookings, error: bookingErr } = await supabase
         .from("bookings")
         .select("start_time, duration_hours")

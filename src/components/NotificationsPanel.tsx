@@ -4,11 +4,7 @@ import { Bell, Check, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -50,10 +46,7 @@ export function NotificationsPanel() {
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {
       if (!supabase) return;
-      const { error } = await supabase
-        .from("notifications")
-        .update({ is_read: true })
-        .eq("id", id);
+      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -66,7 +59,11 @@ export function NotificationsPanel() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-muted-foreground hover:text-foreground"
+        >
           <Bell className="size-5" />
           {unreadCount > 0 && (
             <span className="absolute right-2 top-2 flex size-2 items-center justify-center rounded-full bg-destructive">
@@ -94,12 +91,14 @@ export function NotificationsPanel() {
                   key={n.id}
                   className={cn(
                     "group flex flex-col gap-1 border-b p-4 text-sm transition-colors last:border-b-0 hover:bg-muted/50",
-                    !n.is_read ? "bg-muted/30" : "opacity-70"
+                    !n.is_read ? "bg-muted/30" : "opacity-70",
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <p className="flex-1 font-medium leading-tight">
-                      {n.type === "escalation" && <span className="text-destructive font-bold mr-1">[URGENT]</span>}
+                      {n.type === "escalation" && (
+                        <span className="text-destructive font-bold mr-1">[URGENT]</span>
+                      )}
                       {n.message}
                     </p>
                     {!n.is_read && (

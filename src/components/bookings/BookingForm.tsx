@@ -245,6 +245,7 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
 export function BookingForm() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [conflictError, setConflictError] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -283,23 +284,66 @@ export function BookingForm() {
     },
     onSuccess: () => {
       toast.success("Booking created successfully!");
+      setConflictError(false);
       form.reset({ time: "", durationHours: "1" });
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to create booking. Time slot might overlap.");
+      if (
+        error.message.includes("overlap") ||
+        error.message.includes("constraint") ||
+        error.message.includes("Failed to create booking")
+      ) {
+        setConflictError(true);
+      } else {
+        toast.error(error.message || "Failed to create booking. Time slot might overlap.");
+        setConflictError(true); // Default to conflict UI for safety on insert errors
+      }
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setConflictError(false);
     createBooking(values);
   }
 
+  if (conflictError) {
+    return (
+      <Card className="panel border-destructive/40 bg-destructive/5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-10">
+          <CalendarClock className="size-24 text-destructive" />
+        </div>
+        <CardHeader>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <CalendarClock className="size-5" />
+            Slot no longer available
+          </CardTitle>
+          <CardDescription className="text-foreground/80">
+            The selected time has already been booked by another member.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-destructive/30 hover:bg-destructive/10"
+            onClick={() => {
+              setConflictError(false);
+              form.reset({ time: "", durationHours: "1" });
+            }}
+          >
+            Choose another slot
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card>
+    <Card className="panel">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CalendarClock className="size-5" />
+          <CalendarClock className="size-5 text-primary" />
           Book Key
         </CardTitle>
         <CardDescription>Reserve the C-ROB lab key for your slot.</CardDescription>
@@ -360,7 +404,13 @@ export function BookingForm() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button
+              type="submit"
+              variant="crobPrimary"
+              glow
+              className="w-full"
+              disabled={isPending}
+            >
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" /> Submitting...

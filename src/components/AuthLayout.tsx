@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { KeyRound } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { CrobBackground, CrobLogo } from "@/components/crob";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 export function AuthLayout({
@@ -16,21 +16,25 @@ export function AuthLayout({
   footer?: ReactNode;
 }) {
   return (
-    <div className="grid-lines flex min-h-screen items-center justify-center px-5 py-12">
-      <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <KeyRound className="size-5" />
-          </span>
-          <span className="font-display text-sm leading-tight">
-            C-ROB
-            <span className="block text-[10px] tracking-[0.22em] text-muted-foreground">
-              SMART KEY LOCKER
-            </span>
-          </span>
+    <div className="relative flex min-h-screen items-center justify-center px-5 py-12">
+      <CrobBackground variant="auth" />
+
+      <div className="relative z-10 w-full max-w-md animate-fade-up">
+        <Link to="/" className="mb-8 flex items-center justify-center">
+          <CrobLogo size="md" />
         </Link>
 
-        <div className="panel glow p-6">
+        <div className="panel glow relative overflow-hidden rounded-2xl p-6">
+          {/* Gradient border accent along the top */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, transparent, oklch(0.62 0.19 258) 30%, oklch(0.75 0.14 205) 70%, transparent)",
+            }}
+            aria-hidden="true"
+          />
+
           <h1 className="text-xl font-bold">{title}</h1>
           {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
           {!isSupabaseConfigured ? (
@@ -41,7 +45,9 @@ export function AuthLayout({
           <div className="mt-5">{children}</div>
         </div>
 
-        {footer ? <div className="mt-5 text-center text-sm text-muted-foreground">{footer}</div> : null}
+        {footer ? (
+          <div className="mt-5 text-center text-sm text-muted-foreground">{footer}</div>
+        ) : null}
       </div>
     </div>
   );
