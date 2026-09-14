@@ -72,7 +72,7 @@ function AdminDashboard() {
 
   const customSidebar = (
     <>
-      <div className="px-5 mb-4">
+      <div className="px-5 mb-4 shrink-0">
         <h2 className="text-lg font-bold font-display text-primary/90 tracking-tight">
           Admin Dashboard
         </h2>
@@ -80,28 +80,29 @@ function AdminDashboard() {
           System administration and oversight.
         </p>
       </div>
-      <nav className="space-y-1 px-3">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium whitespace-nowrap ${
-                isActive
-                  ? "bg-primary/15 text-primary border-l-2 border-primary"
-                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground border-l-2 border-transparent"
-              }`}
-            >
-              <Icon className="size-4 shrink-0" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto p-4 hidden md:block">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pb-4">
+        <nav className="space-y-1 px-3">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium whitespace-nowrap ${
+                  isActive
+                    ? "bg-primary/15 text-primary border-l-2 border-primary"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground border-l-2 border-transparent"
+                }`}
+              >
+                <Icon className="size-4 shrink-0" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="mt-auto shrink-0  p-4 hidden md:block">
         <Card className="panel border-sidebar-border bg-card/60 glow-subtle">
           <CardContent className="p-3">
             <div className="flex flex-col gap-3">

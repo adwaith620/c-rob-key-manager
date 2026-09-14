@@ -32,6 +32,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
 const formSchema = z
   .object({
     date: z.date({
@@ -43,10 +47,14 @@ const formSchema = z
       })
       .min(1, "Time is required"),
     durationHours: z.string().min(1, "Duration is required"),
+    bookingType: z.enum(["individual", "team"], {
+      required_error: "Booking type is required",
+    }),
+    teamSize: z.coerce.number().optional(),
+    purpose: z.string().max(500, "Purpose cannot exceed 500 characters").optional(),
   })
-  .refine(
-    (data) => {
-      if (!data.date || !data.time) return false;
+  .superRefine((data, ctx) => {
+    if (data.date && data.time) {
       const [hours, minutes] = data.time.split(":");
       const combined = setMinutes(
         setHours(new Date(data.date), parseInt(hours || "0", 10)),
@@ -54,10 +62,42 @@ const formSchema = z
       );
       const selected = combined.getTime();
       const now = new Date().getTime() - 5 * 60 * 1000;
-      return selected > now;
-    },
-    { message: "Start time must be in the future", path: ["time"] },
-  );
+      if (selected <= now) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Start time must be in the future",
+          path: ["time"],
+        });
+      }
+    }
+    if (data.bookingType === "team") {
+      if (data.teamSize === undefined || isNaN(data.teamSize) || data.teamSize === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Please enter the number of members attending.",
+          path: ["teamSize"],
+        });
+      } else if (data.teamSize < 2) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Team booking must include at least 2 members.",
+          path: ["teamSize"],
+        });
+      } else if (data.teamSize > 30) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Team booking cannot include more than 30 members.",
+          path: ["teamSize"],
+        });
+      } else if (!Number.isInteger(data.teamSize)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Team size must be an integer.",
+          path: ["teamSize"],
+        });
+      }
+    }
+  });
 
 function DatePickerPopover({ value, onChange }: { value?: Date; onChange: (d?: Date) => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -252,6 +292,8 @@ export function BookingForm() {
     defaultValues: {
       time: "",
       durationHours: "1",
+      bookingType: "individual",
+      purpose: "",
     },
   });
 
@@ -273,6 +315,9 @@ export function BookingForm() {
           start_time: isoString,
           duration_hours: parseInt(values.durationHours, 10),
           status: "pending",
+          booking_type: values.bookingType,
+          team_size: values.bookingType === "individual" ? 1 : values.teamSize,
+          purpose: values.purpose && values.purpose.trim() !== "" ? values.purpose.trim() : null,
         })
         .select()
         .single();
@@ -285,7 +330,13 @@ export function BookingForm() {
     onSuccess: () => {
       toast.success("Booking created successfully!");
       setConflictError(false);
-      form.reset({ time: "", durationHours: "1" });
+      form.reset({
+        time: "",
+        durationHours: "1",
+        bookingType: "individual",
+        purpose: "",
+        teamSize: undefined,
+      });
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error: Error) => {
@@ -398,6 +449,84 @@ export function BookingForm() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="bookingType"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Booking Type</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex gap-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="individual" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">Individual</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="team" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">Team</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("bookingType") === "team" && (
+                <FormField
+                  control={form.control}
+                  name="teamSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        How many members are working in this project including you?
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="2"
+                          max="30"
+                          step="1"
+                          placeholder="e.g. 3"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || e.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="purpose"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      What is the purpose of booking?{" "}
+                      <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Briefly describe what you'll be working on..."
+                        className="resize-none h-20"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

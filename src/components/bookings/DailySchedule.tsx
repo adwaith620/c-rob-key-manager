@@ -72,7 +72,7 @@ export function DailySchedule() {
   }
 
   return (
-    <Card className="panel flex flex-col h-full opacity-90 transition-all hover:opacity-100">
+    <Card className="panel flex flex-col opacity-90 transition-all hover:opacity-100">
       <CardHeader className="pb-2 pt-4 border-b border-border/10">
         <div className="flex items-center justify-center relative w-full">
           <div className="absolute left-0 flex items-center justify-center">
@@ -105,14 +105,14 @@ export function DailySchedule() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 flex-1 flex flex-col">
-        <div className="flex-1 p-4">
+      <CardContent className="p-0">
+        <div className="p-4">
           {isLoading ? (
             <div className="flex justify-center py-4">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>
           ) : !schedule || schedule.length === 0 ? (
-            <div className="text-center py-6 text-sm text-muted-foreground bg-muted/20 rounded-md">
+            <div className="text-center py-4 text-sm text-muted-foreground bg-muted/20 rounded-md">
               No bookings scheduled.
             </div>
           ) : (

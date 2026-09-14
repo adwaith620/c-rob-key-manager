@@ -47,8 +47,8 @@ export function AppShell({
             "linear-gradient(180deg, oklch(0.19 0.025 265) 0%, oklch(0.16 0.02 265) 100%)",
         }}
       >
-        <div className="sticky top-0 flex h-screen flex-col overflow-y-auto">
-          <div className="p-5">
+        <div className="sticky top-0 flex h-screen flex-col">
+          <div className="p-5 shrink-0">
             <Link to="/">
               <CrobLogo size="sm" />
             </Link>
@@ -58,7 +58,7 @@ export function AppShell({
             customSidebar
           ) : (
             <>
-              <nav className="mt-3 space-y-1 px-3">
+              <nav className="mt-3 space-y-1 px-3 flex-1 overflow-y-auto custom-scrollbar pb-4">
                 {links.map(({ to, label, icon: Icon }) => {
                   const active = pathname === to;
                   return (
@@ -80,7 +80,7 @@ export function AppShell({
               </nav>
 
               {/* User profile card */}
-              <div className="mt-auto p-4">
+              <div className="mt-auto p-4 shrink-0">
                 <div className="rounded-lg border border-sidebar-border bg-card/60 p-3 glow-subtle">
                   <p className="truncate text-sm font-medium">
                     {profile?.full_name ?? "C-ROB user"}

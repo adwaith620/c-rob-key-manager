@@ -466,16 +466,25 @@ export function BookingsSection() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="capitalize font-medium">
-                          {b.booking_type}{" "}
-                          {b.booking_type === "team" && `(${b.additional_people + 1} people)`}
+                        <div className="capitalize font-medium text-sm">
+                          {b.booking_type || "Individual"}
+                          {b.booking_type === "team" && (
+                            <span className="block text-xs text-muted-foreground font-normal">
+                              Members attending: {b.team_size || 1}
+                            </span>
+                          )}
                         </div>
-                        {b.purpose && (
+                        {b.purpose && b.purpose !== "nil" && (
                           <div
-                            className="text-xs text-muted-foreground max-w-[200px] truncate"
+                            className="text-xs text-muted-foreground/80 italic mt-1 max-w-[200px] truncate"
                             title={b.purpose}
                           >
                             "{b.purpose}"
+                          </div>
+                        )}
+                        {(!b.purpose || b.purpose === "nil") && (
+                          <div className="text-[10px] text-muted-foreground/50 mt-1 italic">
+                            No purpose provided.
                           </div>
                         )}
                       </TableCell>
