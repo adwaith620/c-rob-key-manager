@@ -406,7 +406,7 @@ export function BookingForm() {
               control={form.control}
               name="bookingType"
               render={({ field }) => (
-                <FormItem className="space-y-3">
+                <FormItem className="space-y-5">
                   <FormLabel className="text-base text-foreground/90 font-medium">
                     Booking Type
                   </FormLabel>
@@ -495,7 +495,7 @@ export function BookingForm() {
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem className="flex flex-col gap-4">
                         <FormLabel>Date</FormLabel>
                         <DatePickerPopover value={field.value} onChange={field.onChange} />
                         <FormMessage />
@@ -507,7 +507,7 @@ export function BookingForm() {
                     control={form.control}
                     name="time"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem className="flex flex-col gap-4">
                         <FormLabel>Time</FormLabel>
                         <TimePickerPopover value={field.value} onChange={field.onChange} />
                         <FormMessage />
@@ -521,7 +521,7 @@ export function BookingForm() {
                     control={form.control}
                     name="durationHours"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem className="flex flex-col gap-4">
                         <FormLabel>Duration</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
@@ -546,7 +546,7 @@ export function BookingForm() {
                     control={form.control}
                     name="purpose"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="space-y-4">
                         <FormLabel>
                           Purpose of Visit{" "}
                           <span className="text-muted-foreground text-xs font-normal">

@@ -1,17 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Loader2, XCircle } from "lucide-react";
+import { Loader2, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,8 +25,8 @@ export interface Booking {
 export function BookingList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [viewAllPast, setViewAllPast] = useState(false);
-  const [viewAllCancelled, setViewAllCancelled] = useState(false);
+  const [isPastExpanded, setIsPastExpanded] = useState(false);
+  const [isCancelledExpanded, setIsCancelledExpanded] = useState(false);
 
   const {
     data: bookings,
@@ -186,10 +178,18 @@ export function BookingList() {
           {pastAll.length > 2 && (
             <Button
               variant="link"
-              className="text-xs h-auto p-0 text-muted-foreground"
-              onClick={() => setViewAllPast(true)}
+              className="text-xs h-auto p-0 text-muted-foreground flex items-center gap-1 hover:text-foreground"
+              onClick={() => setIsPastExpanded(!isPastExpanded)}
             >
-              View all
+              {isPastExpanded ? (
+                <>
+                  Show less <ChevronUp className="size-3" />
+                </>
+              ) : (
+                <>
+                  View all <ChevronDown className="size-3" />
+                </>
+              )}
             </Button>
           )}
         </CardHeader>
@@ -197,8 +197,14 @@ export function BookingList() {
           {past.length === 0 ? (
             <p className="text-sm text-muted-foreground">No past bookings.</p>
           ) : (
-            <div className="space-y-3">
-              {past.map((booking) => (
+            <div
+              className={
+                isPastExpanded
+                  ? "max-h-[320px] overflow-y-auto pr-2 custom-scrollbar space-y-3"
+                  : "space-y-3"
+              }
+            >
+              {(isPastExpanded ? pastAll : past).map((booking) => (
                 <BookingCard key={booking.id} booking={booking} />
               ))}
             </div>
@@ -212,10 +218,18 @@ export function BookingList() {
           {cancelledAll.length > 2 && (
             <Button
               variant="link"
-              className="text-xs h-auto p-0 text-muted-foreground"
-              onClick={() => setViewAllCancelled(true)}
+              className="text-xs h-auto p-0 text-muted-foreground flex items-center gap-1 hover:text-foreground"
+              onClick={() => setIsCancelledExpanded(!isCancelledExpanded)}
             >
-              View all
+              {isCancelledExpanded ? (
+                <>
+                  Show less <ChevronUp className="size-3" />
+                </>
+              ) : (
+                <>
+                  View all <ChevronDown className="size-3" />
+                </>
+              )}
             </Button>
           )}
         </CardHeader>
@@ -223,45 +237,20 @@ export function BookingList() {
           {cancelled.length === 0 ? (
             <p className="text-sm text-muted-foreground">No cancelled bookings.</p>
           ) : (
-            <div className="space-y-3">
-              {cancelled.map((booking) => (
+            <div
+              className={
+                isCancelledExpanded
+                  ? "max-h-[320px] overflow-y-auto pr-2 custom-scrollbar space-y-3"
+                  : "space-y-3"
+              }
+            >
+              {(isCancelledExpanded ? cancelledAll : cancelled).map((booking) => (
                 <BookingCard key={booking.id} booking={booking} />
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Dialogs for View All */}
-      <Dialog open={viewAllPast} onOpenChange={setViewAllPast}>
-        <DialogContent className="max-w-2xl border-sidebar-border bg-card/95 backdrop-blur-xl">
-          <DialogHeader>
-            <DialogTitle>All Past Bookings</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="h-[60vh] mt-4 pr-4">
-            <div className="space-y-4">
-              {pastAll.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={viewAllCancelled} onOpenChange={setViewAllCancelled}>
-        <DialogContent className="max-w-2xl border-sidebar-border bg-card/95 backdrop-blur-xl">
-          <DialogHeader>
-            <DialogTitle>All Cancelled Bookings</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="h-[60vh] mt-4 pr-4">
-            <div className="space-y-4">
-              {cancelledAll.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
