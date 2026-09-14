@@ -18,6 +18,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as MemberRouteImport } from './routes/member'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ExecomIndexRouteImport } from './routes/execom/index'
+import { Route as ExecomActiveProjectsRouteImport } from './routes/execom/active-projects'
+import { Route as ExecomHistoryRouteImport } from './routes/execom/history'
+import { Route as ExecomKeyLockerRouteImport } from './routes/execom/key-locker'
+import { Route as ExecomMembersRouteImport } from './routes/execom/members'
+import { Route as ExecomProjectRequestsRouteImport } from './routes/execom/project-requests'
+import { Route as ExecomReportsRouteImport } from './routes/execom/reports'
+import { Route as ExecomSettingsRouteImport } from './routes/execom/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,40 +72,103 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExecomIndexRoute = ExecomIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ExecomRoute,
+} as any)
+const ExecomActiveProjectsRoute = ExecomActiveProjectsRouteImport.update({
+  id: '/active-projects',
+  path: '/active-projects',
+  getParentRoute: () => ExecomRoute,
+} as any)
+const ExecomHistoryRoute = ExecomHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => ExecomRoute,
+} as any)
+const ExecomKeyLockerRoute = ExecomKeyLockerRouteImport.update({
+  id: '/key-locker',
+  path: '/key-locker',
+  getParentRoute: () => ExecomRoute,
+} as any)
+const ExecomMembersRoute = ExecomMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => ExecomRoute,
+} as any)
+const ExecomProjectRequestsRoute = ExecomProjectRequestsRouteImport.update({
+  id: '/project-requests',
+  path: '/project-requests',
+  getParentRoute: () => ExecomRoute,
+} as any)
+const ExecomReportsRoute = ExecomReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => ExecomRoute,
+} as any)
+const ExecomSettingsRoute = ExecomSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ExecomRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
-  '/execom': typeof ExecomRoute
+  '/execom': typeof ExecomRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/execom/active-projects': typeof ExecomActiveProjectsRoute
+  '/execom/history': typeof ExecomHistoryRoute
+  '/execom/key-locker': typeof ExecomKeyLockerRoute
+  '/execom/members': typeof ExecomMembersRoute
+  '/execom/project-requests': typeof ExecomProjectRequestsRoute
+  '/execom/reports': typeof ExecomReportsRoute
+  '/execom/settings': typeof ExecomSettingsRoute
+  '/execom/': typeof ExecomIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
-  '/execom': typeof ExecomRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/execom/active-projects': typeof ExecomActiveProjectsRoute
+  '/execom/history': typeof ExecomHistoryRoute
+  '/execom/key-locker': typeof ExecomKeyLockerRoute
+  '/execom/members': typeof ExecomMembersRoute
+  '/execom/project-requests': typeof ExecomProjectRequestsRoute
+  '/execom/reports': typeof ExecomReportsRoute
+  '/execom/settings': typeof ExecomSettingsRoute
+  '/execom': typeof ExecomIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
-  '/execom': typeof ExecomRoute
+  '/execom': typeof ExecomRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/execom/active-projects': typeof ExecomActiveProjectsRoute
+  '/execom/history': typeof ExecomHistoryRoute
+  '/execom/key-locker': typeof ExecomKeyLockerRoute
+  '/execom/members': typeof ExecomMembersRoute
+  '/execom/project-requests': typeof ExecomProjectRequestsRoute
+  '/execom/reports': typeof ExecomReportsRoute
+  '/execom/settings': typeof ExecomSettingsRoute
+  '/execom/': typeof ExecomIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,17 +182,32 @@ export interface FileRouteTypes {
     | '/member'
     | '/register'
     | '/reset-password'
+    | '/execom/active-projects'
+    | '/execom/history'
+    | '/execom/key-locker'
+    | '/execom/members'
+    | '/execom/project-requests'
+    | '/execom/reports'
+    | '/execom/settings'
+    | '/execom/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/access-denied'
     | '/admin'
-    | '/execom'
     | '/forgot-password'
     | '/login'
     | '/member'
     | '/register'
     | '/reset-password'
+    | '/execom/active-projects'
+    | '/execom/history'
+    | '/execom/key-locker'
+    | '/execom/members'
+    | '/execom/project-requests'
+    | '/execom/reports'
+    | '/execom/settings'
+    | '/execom'
   id:
     | '__root__'
     | '/'
@@ -133,13 +219,21 @@ export interface FileRouteTypes {
     | '/member'
     | '/register'
     | '/reset-password'
+    | '/execom/active-projects'
+    | '/execom/history'
+    | '/execom/key-locker'
+    | '/execom/members'
+    | '/execom/project-requests'
+    | '/execom/reports'
+    | '/execom/settings'
+    | '/execom/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessDeniedRoute: typeof AccessDeniedRoute
   AdminRoute: typeof AdminRoute
-  ExecomRoute: typeof ExecomRoute
+  ExecomRoute: typeof ExecomRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MemberRoute: typeof MemberRoute
@@ -212,14 +306,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/execom/': {
+      id: '/execom/'
+      path: '/'
+      fullPath: '/execom/'
+      preLoaderRoute: typeof ExecomIndexRouteImport
+      parentRoute: typeof ExecomRoute
+    }
+    '/execom/active-projects': {
+      id: '/execom/active-projects'
+      path: '/active-projects'
+      fullPath: '/execom/active-projects'
+      preLoaderRoute: typeof ExecomActiveProjectsRouteImport
+      parentRoute: typeof ExecomRoute
+    }
+    '/execom/history': {
+      id: '/execom/history'
+      path: '/history'
+      fullPath: '/execom/history'
+      preLoaderRoute: typeof ExecomHistoryRouteImport
+      parentRoute: typeof ExecomRoute
+    }
+    '/execom/key-locker': {
+      id: '/execom/key-locker'
+      path: '/key-locker'
+      fullPath: '/execom/key-locker'
+      preLoaderRoute: typeof ExecomKeyLockerRouteImport
+      parentRoute: typeof ExecomRoute
+    }
+    '/execom/members': {
+      id: '/execom/members'
+      path: '/members'
+      fullPath: '/execom/members'
+      preLoaderRoute: typeof ExecomMembersRouteImport
+      parentRoute: typeof ExecomRoute
+    }
+    '/execom/project-requests': {
+      id: '/execom/project-requests'
+      path: '/project-requests'
+      fullPath: '/execom/project-requests'
+      preLoaderRoute: typeof ExecomProjectRequestsRouteImport
+      parentRoute: typeof ExecomRoute
+    }
+    '/execom/reports': {
+      id: '/execom/reports'
+      path: '/reports'
+      fullPath: '/execom/reports'
+      preLoaderRoute: typeof ExecomReportsRouteImport
+      parentRoute: typeof ExecomRoute
+    }
+    '/execom/settings': {
+      id: '/execom/settings'
+      path: '/settings'
+      fullPath: '/execom/settings'
+      preLoaderRoute: typeof ExecomSettingsRouteImport
+      parentRoute: typeof ExecomRoute
+    }
   }
 }
+
+interface ExecomRouteChildren {
+  ExecomActiveProjectsRoute: typeof ExecomActiveProjectsRoute
+  ExecomHistoryRoute: typeof ExecomHistoryRoute
+  ExecomKeyLockerRoute: typeof ExecomKeyLockerRoute
+  ExecomMembersRoute: typeof ExecomMembersRoute
+  ExecomProjectRequestsRoute: typeof ExecomProjectRequestsRoute
+  ExecomReportsRoute: typeof ExecomReportsRoute
+  ExecomSettingsRoute: typeof ExecomSettingsRoute
+  ExecomIndexRoute: typeof ExecomIndexRoute
+}
+
+const ExecomRouteChildren: ExecomRouteChildren = {
+  ExecomActiveProjectsRoute: ExecomActiveProjectsRoute,
+  ExecomHistoryRoute: ExecomHistoryRoute,
+  ExecomKeyLockerRoute: ExecomKeyLockerRoute,
+  ExecomMembersRoute: ExecomMembersRoute,
+  ExecomProjectRequestsRoute: ExecomProjectRequestsRoute,
+  ExecomReportsRoute: ExecomReportsRoute,
+  ExecomSettingsRoute: ExecomSettingsRoute,
+  ExecomIndexRoute: ExecomIndexRoute,
+}
+
+const ExecomRouteWithChildren =
+  ExecomRoute._addFileChildren(ExecomRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessDeniedRoute: AccessDeniedRoute,
   AdminRoute: AdminRoute,
-  ExecomRoute: ExecomRoute,
+  ExecomRoute: ExecomRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MemberRoute: MemberRoute,

@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader2, XCircle } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +21,6 @@ export interface Booking {
 export function BookingList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [showAllPast, setShowAllPast] = useState(false);
 
   const {
     data: bookings,
@@ -147,46 +145,32 @@ export function BookingList() {
       </Card>
 
       <Card className="panel opacity-80">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 space-y-0">
+        <CardHeader>
           <CardTitle>Past & Cancelled</CardTitle>
-          {past.length > 2 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground hover:text-foreground h-8"
-              onClick={() => setShowAllPast(!showAllPast)}
-            >
-              {showAllPast ? "Show Less" : "View All"}
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
           {past.length === 0 ? (
             <p className="text-sm text-muted-foreground">No past bookings.</p>
           ) : (
-            <div className="flex flex-col">
-              <div
-                className={`space-y-3 ${showAllPast ? "max-h-[300px] overflow-y-auto pr-2" : ""}`}
-              >
-                {(showAllPast ? past : past.slice(0, 2)).map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between rounded-lg border border-border/30 bg-card/20 p-3"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-foreground/80">
-                        {format(new Date(booking.start_time), "PPP 'at' p")}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {booking.duration_hours} hr{booking.duration_hours > 1 ? "s" : ""}
-                      </div>
+            <div className="space-y-3">
+              {past.map((booking) => (
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between rounded-lg border border-border/30 bg-card/20 p-3"
+                >
+                  <div>
+                    <div className="text-sm font-medium text-foreground/80">
+                      {format(new Date(booking.start_time), "PPP 'at' p")}
                     </div>
-                    <Badge variant="outline" className="text-muted-foreground border-border/50">
-                      {booking.status}
-                    </Badge>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {booking.duration_hours} hr{booking.duration_hours > 1 ? "s" : ""}
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <Badge variant="outline" className="text-muted-foreground border-border/50">
+                    {booking.status}
+                  </Badge>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
