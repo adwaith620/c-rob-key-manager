@@ -1,34 +1,46 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { CalendarClock, KeyRound, LogOut, ShieldCheck, Users } from "lucide-react";
+import { Link, useNavigate, useRouterState, Outlet } from "@tanstack/react-router";
+import {
+  LayoutDashboard,
+  KeyRound,
+  FileText,
+  Briefcase,
+  Users,
+  History,
+  BarChart,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAuth, roleLabel, type Role } from "@/hooks/useAuth";
+import { useAuth, roleLabel } from "@/hooks/useAuth";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { CrobLogo } from "@/components/crob";
 import { GradientText } from "@/components/crob";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof KeyRound; roles: Role[] };
-
-const NAV: NavItem[] = [
-  {
-    to: "/member",
-    label: "Member Dashboard",
-    icon: CalendarClock,
-    roles: ["member", "execom", "admin"],
-  },
-  { to: "/execom", label: "Execom Dashboard", icon: ShieldCheck, roles: ["execom", "admin"] },
-  { to: "/admin", label: "Admin Console", icon: Users, roles: ["admin"] },
+const NAV = [
+  { to: "/execom", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/execom/key-locker", label: "Key Locker", icon: KeyRound },
+  { to: "/execom/project-requests", label: "Project Requests", icon: FileText },
+  { to: "/execom/active-projects", label: "Active Projects", icon: Briefcase },
+  { to: "/execom/members", label: "Members", icon: Users },
+  { to: "/execom/history", label: "Activity / History", icon: History },
+  { to: "/execom/reports", label: "Reports", icon: BarChart },
+  { to: "/execom/settings", label: "Settings", icon: Settings },
 ];
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function ExecomLayout() {
   const { profile, user, role, signOut } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const links = NAV.filter((item) => item.roles.includes(role));
+  // Execom or Admin only
+  if (role !== "execom" && role !== "admin") {
+    navigate({ to: "/member", replace: true });
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -44,13 +56,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link to="/">
             <CrobLogo size="sm" />
           </Link>
+          <div className="mt-2 text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+            Admin Dashboard
+          </div>
         </div>
 
         <nav className="mt-3 space-y-1 px-3">
-          {links.map(({ to, label, icon: Icon }) => {
-            const active = pathname === to;
+          {NAV.map(({ to, label, icon: Icon }) => {
+            const active = pathname === to || (to !== "/execom" && pathname.startsWith(to));
             return (
-              <Link
+               <Link
                 key={to}
                 to={to}
                 className={cn(
@@ -82,12 +97,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* ── Main content area ── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top header — frosted glass */}
-        <header className="flex items-center justify-between gap-4 border-b border-border/50 bg-background/60 px-5 py-3 backdrop-blur-xl">
+        <header className="flex items-center justify-between gap-4 border-b border-border/50 bg-background/60 px-5 py-3 backdrop-blur-xl sticky top-0 z-50">
           <div className="flex items-center gap-2 md:hidden">
             <CrobLogo size="xs" showSubtext={false} />
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden text-xs text-muted-foreground sm:inline">{user?.email}</span>
+            <Link to="/member">
+              <Button variant="ghost" size="sm" className="hidden sm:flex text-xs">
+                Switch to Member View
+              </Button>
+            </Link>
             <NotificationsPanel />
             <Button
               variant="outline"
@@ -104,24 +123,29 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Mobile nav */}
         <nav className="flex gap-2 overflow-x-auto border-b border-border px-4 py-2 md:hidden">
-          {links.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className={cn(
-                "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs transition-colors",
-                pathname === to
-                  ? "border border-primary/30 bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:bg-card/60",
-              )}
-            >
-              <Icon className="size-3" />
-              {label}
-            </Link>
-          ))}
+          {NAV.map(({ to, label, icon: Icon }) => {
+            const active = pathname === to || (to !== "/execom" && pathname.startsWith(to));
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={cn(
+                  "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs transition-colors",
+                  active
+                    ? "border border-primary/30 bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:bg-card/60",
+                )}
+              >
+                <Icon className="size-3" />
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <main className="flex-1 p-5 md:p-8">{children}</main>
+        <main className="flex-1 p-5 md:p-8">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
@@ -134,7 +158,7 @@ function splitFirstWord(title: string): [string, string] {
   return [title.slice(0, idx), title.slice(idx)];
 }
 
-export function PageHeading({
+export function ExecomPageHeading({
   title,
   subtitle,
   right,
