@@ -23,19 +23,20 @@ import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
-export function UsersSection() {
+export function UsersSection({ filterRole, title }: { filterRole?: string; title?: string } = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ["admin_users"],
+    queryKey: ["admin_users", filterRole],
     queryFn: async () => {
-      if (!supabase) return [];
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (!supabase) throw new Error("No supabase");
+      let query = supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      if (filterRole) {
+        query = query.eq("role", filterRole);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -62,9 +63,9 @@ export function UsersSection() {
     ) || [];
 
   return (
-    <Card className="panel">
+    <Card className="panel fade-up">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Member Management</CardTitle>
+        <CardTitle>{title || "Member Management"}</CardTitle>
         <div className="relative w-64">
           <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <Input

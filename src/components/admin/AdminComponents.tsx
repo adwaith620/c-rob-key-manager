@@ -1,3 +1,27 @@
+import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { CalendarIcon, Download, Table2 } from "lucide-react";
+import {
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  subWeeks,
+  subMonths,
+  isBefore,
+} from "date-fns";
+import * as XLSX from "xlsx";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -10,12 +34,15 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Key,
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +69,21 @@ export function OverviewSection() {
       if (!supabase) return 0;
       const { count, error } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("role", "member");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: execomCount, isLoading: isLoadingExecom } = useQuery({
+    queryKey: ["admin_execom_count"],
+    queryFn: async () => {
+      if (!supabase) return 0;
+      const { count, error } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "execom");
       if (error) throw error;
       return count || 0;
     },
@@ -67,8 +108,8 @@ export function OverviewSection() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="panel bg-card/40">
+      <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-4">
+        <Card className="panel bg-card/40 fade-up" style={{ animationDelay: "0ms" }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
             <Users className="size-4 text-muted-foreground" />
@@ -79,7 +120,20 @@ export function OverviewSection() {
           </CardContent>
         </Card>
 
-        <Card className="panel bg-card/40">
+        <Card className="panel bg-card/40 fade-up" style={{ animationDelay: "50ms" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total ExeCom</CardTitle>
+            <Users className="size-4 text-warning" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-warning">
+              {isLoadingExecom ? "-" : execomCount}
+            </div>
+            <p className="text-xs text-muted-foreground">ExeCom members</p>
+          </CardContent>
+        </Card>
+
+        <Card className="panel bg-card/40 fade-up" style={{ animationDelay: "100ms" }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Bookings</CardTitle>
             <Activity className="size-4 text-primary" />
@@ -92,7 +146,7 @@ export function OverviewSection() {
           </CardContent>
         </Card>
 
-        <Card className="panel bg-card/40">
+        <Card className="panel bg-card/40 fade-up" style={{ animationDelay: "150ms" }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
             <Calendar className="size-4 text-warning" />
@@ -104,21 +158,10 @@ export function OverviewSection() {
             <p className="text-xs text-muted-foreground">Awaiting approval</p>
           </CardContent>
         </Card>
-
-        <Card className="panel bg-card/40 opacity-70">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Lockers</CardTitle>
-            <Box className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-destructive">No locker data</p>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="panel">
+        <Card className="panel fade-up" style={{ animationDelay: "200ms" }}>
           <CardHeader>
             <CardTitle>Booking Overview</CardTitle>
           </CardHeader>
@@ -128,6 +171,13 @@ export function OverviewSection() {
                 <span className="text-sm text-muted-foreground">Total Bookings</span>
                 <span className="font-semibold">
                   {isLoadingBookings ? "-" : bookingsStats?.total}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center border-b border-border/10 pb-2">
+                <span className="text-sm text-muted-foreground">Pending Requests</span>
+                <span className="font-semibold text-warning">
+                  {isLoadingBookings ? "-" : bookingsStats?.pending}
                 </span>
               </div>
               <div className="flex justify-between items-center border-b border-border/10 pb-2">
@@ -146,7 +196,7 @@ export function OverviewSection() {
           </CardContent>
         </Card>
 
-        <Card className="panel opacity-70">
+        <Card className="panel opacity-70 fade-up" style={{ animationDelay: "250ms" }}>
           <CardHeader>
             <CardTitle>Locker Status</CardTitle>
           </CardHeader>
@@ -164,15 +214,21 @@ export function OverviewSection() {
 export function BookingsSection() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const { user } = useAuth();
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const { data: bookings, isLoading } = useQuery({
+  const {
+    data: bookings,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ["admin_bookings"],
     queryFn: async () => {
       if (!supabase) return [];
-      // In a real app we'd join profiles to get user names, but we can do our best.
       const { data, error } = await supabase
         .from("bookings")
-        .select("*")
+        .select("*, profiles(full_name, email)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -180,23 +236,93 @@ export function BookingsSection() {
   });
 
   const updateBooking = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase!.from("bookings").update({ status }).eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({
+      id,
+      status,
+      oldStatus,
+      actionName,
+    }: {
+      id: string;
+      status: string;
+      oldStatus: string;
+      actionName: string;
+    }) => {
+      // 1. Update booking
+      const { error: updateError } = await supabase!
+        .from("bookings")
+        .update({ status })
+        .eq("id", id);
+      if (updateError) throw updateError;
+
+      // 2. Create audit log
+      if (user) {
+        const { error: logError } = await supabase!.from("audit_logs").insert({
+          action: `${actionName} (from ${oldStatus})`,
+          booking_id: id,
+          user_id: user.id,
+        });
+        if (logError) {
+          console.error("Failed to insert audit log:", logError);
+          // Don't fail the whole operation if logging fails, but log it to console
+        }
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin_bookings"] });
-      toast.success("Booking updated");
+      queryClient.invalidateQueries({ queryKey: ["admin_bookings_stats"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_audit_logs"] });
+      toast.success(`Booking ${variables.status} successfully`);
+      setProcessingId(null);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e: any) => {
+      toast.error(e.message || "Failed to update booking");
+      setProcessingId(null);
+    },
   });
 
-  const filtered = bookings?.filter((b) => b.id.includes(search)) ?? []; // Just show all for now
+  const handleAction = (b: any, newStatus: string, confirmMessage?: string) => {
+    if (confirmMessage && !window.confirm(confirmMessage)) return;
+
+    setProcessingId(b.id);
+    let actionName = "Booking Updated";
+    if (newStatus === "confirmed") actionName = "Booking Approved";
+    if (newStatus === "cancelled") actionName = "Booking Rejected";
+    if (newStatus === "completed") actionName = "Booking Completed";
+
+    updateBooking.mutate({ id: b.id, status: newStatus, oldStatus: b.status, actionName });
+  };
+
+  const filtered =
+    bookings?.filter(
+      (b: any) =>
+        b.id.toLowerCase().includes(search.toLowerCase()) ||
+        b.profiles?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+        b.profiles?.email?.toLowerCase().includes(search.toLowerCase()),
+    ) ?? [];
 
   return (
-    <Card className="panel">
+    <Card className="panel fade-up">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Booking Management</CardTitle>
+        <div className="flex items-center gap-4">
+          <CardTitle>Booking Requests</CardTitle>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={async () => {
+              try {
+                await refetch();
+              } catch (e) {
+                toast.error("Failed to refresh bookings");
+              }
+            }}
+            disabled={isRefetching}
+            title="Refresh Booking Requests"
+            aria-label="Refresh Booking Requests"
+          >
+            <RefreshCw className={cn("size-4", isRefetching && "animate-spin")} />
+          </Button>
+        </div>
         <div className="relative w-64">
           <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <Input
@@ -212,92 +338,189 @@ export function BookingsSection() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Duration</TableHead>
+                <TableHead>Booking Details</TableHead>
+                <TableHead>Member</TableHead>
+                <TableHead>Type & Purpose</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="min-w-[180px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow className="animate-pulse">
                   <TableCell colSpan={5} className="text-center h-24">
-                    Loading bookings...
+                    Loading booking requests...
                   </TableCell>
                 </TableRow>
               ) : bookings?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                    No bookings found
+                    No booking requests found
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((b: any) => (
-                  <TableRow key={b.id}>
-                    <TableCell>
-                      <div className="font-medium">{format(new Date(b.start_time), "PPP")}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {format(new Date(b.start_time), "p")}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="capitalize">
-                        <b>{b.booking_type}</b>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {b.additional_people + 1} people
-                      </div>
-                    </TableCell>
-                    <TableCell>{b.duration_hours} hr</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          b.status === "confirmed"
-                            ? "text-primary border-primary/30"
-                            : b.status === "pending"
-                              ? "text-warning border-warning/30"
-                              : b.status === "cancelled"
-                                ? "text-destructive border-destructive/30"
-                                : "text-green-500 border-green-500/30"
-                        }
-                      >
-                        {b.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => updateBooking.mutate({ id: b.id, status: "confirmed" })}
-                            disabled={b.status === "confirmed" || updateBooking.isPending}
+                filtered.map((b: any) => {
+                  const isProcessing = processingId === b.id;
+                  return (
+                    <TableRow key={b.id}>
+                      <TableCell>
+                        <div className="font-medium">{format(new Date(b.start_time), "PPP")}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(b.start_time), "p")} ({b.duration_hours} hr)
+                        </div>
+                        <div className="text-[10px] text-muted-foreground/70 mt-1" title={b.id}>
+                          ID: {b.id.split("-")[0]}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground/70">
+                          Created: {format(new Date(b.created_at), "MMM d, p")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium">
+                          {b.profiles?.full_name || "Unknown"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {b.profiles?.email || b.user_id?.split("-")[0]}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="capitalize font-medium">
+                          {b.booking_type}{" "}
+                          {b.booking_type === "team" && `(${b.additional_people + 1} people)`}
+                        </div>
+                        {b.purpose && (
+                          <div
+                            className="text-xs text-muted-foreground max-w-[200px] truncate"
+                            title={b.purpose}
                           >
-                            <CheckCircle className="mr-2 size-4" /> Approve
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => updateBooking.mutate({ id: b.id, status: "completed" })}
-                            disabled={b.status === "completed" || updateBooking.isPending}
-                          >
-                            <Clock className="mr-2 size-4" /> Mark Completed
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => updateBooking.mutate({ id: b.id, status: "cancelled" })}
-                            className="text-destructive"
-                            disabled={b.status === "cancelled" || updateBooking.isPending}
-                          >
-                            <XCircle className="mr-2 size-4" /> Cancel
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
+                            "{b.purpose}"
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            b.status === "confirmed"
+                              ? "text-primary border-primary/30"
+                              : b.status === "pending"
+                                ? "text-warning border-warning/30"
+                                : b.status === "cancelled"
+                                  ? "text-destructive border-destructive/30"
+                                  : "text-green-500 border-green-500/30"
+                          }
+                        >
+                          {b.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {b.status === "pending" && (
+                            <>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="h-7 text-[11px] px-2 bg-green-600 hover:bg-green-700 text-white border-0"
+                                onClick={() => handleAction(b, "confirmed")}
+                                disabled={isProcessing}
+                              >
+                                {isProcessing && updateBooking.variables?.status === "confirmed" ? (
+                                  <RefreshCw className="mr-1 size-3 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="mr-1 size-3" />
+                                )}
+                                Approve
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="h-7 text-[11px] px-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0"
+                                onClick={() =>
+                                  handleAction(
+                                    b,
+                                    "cancelled",
+                                    "Are you sure you want to reject this booking request?",
+                                  )
+                                }
+                                disabled={isProcessing}
+                              >
+                                {isProcessing && updateBooking.variables?.status === "cancelled" ? (
+                                  <RefreshCw className="mr-1 size-3 animate-spin" />
+                                ) : (
+                                  <XCircle className="mr-1 size-3" />
+                                )}
+                                Reject
+                              </Button>
+                            </>
+                          )}
+
+                          {b.status === "confirmed" && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-[11px] px-2 border-green-500/30 text-green-500 hover:bg-green-500/10"
+                                onClick={() =>
+                                  handleAction(b, "completed", "Mark this booking as completed?")
+                                }
+                                disabled={isProcessing}
+                              >
+                                {isProcessing && updateBooking.variables?.status === "completed" ? (
+                                  <RefreshCw className="mr-1 size-3 animate-spin" />
+                                ) : (
+                                  <Clock className="mr-1 size-3" />
+                                )}
+                                Complete
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-[11px] px-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+                                onClick={() =>
+                                  handleAction(
+                                    b,
+                                    "cancelled",
+                                    "Are you sure you want to cancel this approved booking?",
+                                  )
+                                }
+                                disabled={isProcessing}
+                                title="Cancel Booking"
+                              >
+                                {isProcessing && updateBooking.variables?.status === "cancelled" ? (
+                                  <RefreshCw className="size-3 animate-spin" />
+                                ) : (
+                                  <XCircle className="size-3" />
+                                )}
+                              </Button>
+                            </>
+                          )}
+
+                          {(b.status === "completed" || b.status === "cancelled") && (
+                            <span className="text-xs text-muted-foreground italic">
+                              No actions available
+                            </span>
+                          )}
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 ml-auto"
+                                disabled={isProcessing}
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem disabled>View Details</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -307,51 +530,431 @@ export function BookingsSection() {
   );
 }
 
+function DatePickerPopover({
+  value,
+  onChange,
+  placeholder = "Select date",
+}: {
+  value: Date | undefined;
+  onChange: (d?: Date) => void;
+  placeholder?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground",
+            !value && "text-muted-foreground",
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {value ? format(value, "d MMMM yyyy") : <span>{placeholder}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0 border-border bg-card shadow-lg" align="start">
+        <ShadcnCalendar
+          mode="single"
+          selected={value}
+          onSelect={(d) => {
+            onChange(d);
+            setIsOpen(false);
+          }}
+          initialFocus
+          className="rounded-md border border-border/10"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function LogsSection() {
-  const { data: logs, isLoading } = useQuery({
+  const { user, role } = useAuth();
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [showGoogleSetup, setShowGoogleSetup] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const {
+    data: logs,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ["admin_audit_logs"],
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("audit_logs")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*, profiles(email, full_name)")
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data;
     },
   });
 
+  const handleQuickRange = (start: Date, end: Date) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  const now = new Date();
+
+  const doExport = async (formatType: "excel" | "google") => {
+    if (!startDate || !endDate) {
+      toast.error("Please select a date range.");
+      return;
+    }
+    if (isBefore(endOfDay(endDate), startOfDay(startDate))) {
+      toast.error("End date cannot be before start date.");
+      return;
+    }
+
+    if (formatType === "google") {
+      setShowGoogleSetup(true);
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      const { data, error } = await supabase!
+        .from("audit_logs")
+        .select("*, profiles(email, full_name)")
+        .gte("created_at", startOfDay(startDate).toISOString())
+        .lte("created_at", endOfDay(endDate).toISOString())
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast.info("No logs found in the selected date range.");
+        return;
+      }
+
+      const rows = data.map((log: any) => ({
+        "Date and Time": format(new Date(log.created_at), "PPP, p"),
+        Action: log.action,
+        "User Name": log.profiles?.full_name || "",
+        "User Email": log.profiles?.email || log.user_id?.split("-")[0] || "System",
+        "Booking ID": log.booking_id || "",
+        "Locker ID": "",
+        "Key ID": "",
+        Status:
+          log.action.toLowerCase().includes("fail") || log.action.toLowerCase().includes("cancel")
+            ? "Failed"
+            : "Success",
+        Details: log.details || "",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Logs");
+
+      const filename = `c-rob-logs-${format(startDate, "yyyy-MM-dd")}-to-${format(endDate, "yyyy-MM-dd")}.xlsx`;
+      XLSX.writeFile(workbook, filename);
+      toast.success("Excel file generated successfully");
+      setIsExportOpen(false);
+    } catch (e: any) {
+      toast.error(e.message || "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <Card className="panel">
-      <CardHeader>
-        <CardTitle>Audit Logs</CardTitle>
+    <Card className="panel fade-up">
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <div>
+          <CardTitle>Audit Logs</CardTitle>
+          <CardDescription>System actions and events.</CardDescription>
+        </div>
+        <div className="flex gap-2">
+          {role === "admin" && (
+            <Button variant="outline" size="sm" onClick={() => setIsExportOpen(true)}>
+              <Download className="size-4 mr-2" /> Export Logs
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            title="Refresh Logs"
+            className="size-9"
+          >
+            <RefreshCw className={cn("size-4", isRefetching && "animate-spin")} />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {isLoading ? (
-            <div className="text-center text-muted-foreground animate-pulse">Loading logs...</div>
+            <div className="text-center text-muted-foreground animate-pulse py-8">
+              Loading logs...
+            </div>
           ) : logs?.length === 0 ? (
-            <div className="text-center text-muted-foreground">No logs found.</div>
+            <div className="text-center text-muted-foreground py-8">No logs found.</div>
           ) : (
             logs?.map((log: any) => (
               <div
                 key={log.id}
-                className="p bg-card/30 border border-border/30 rounded-md p-3 flex justify-between items-center"
+                className="bg-card/30 border border-border/30 rounded-md p-4 space-y-2"
               >
-                <div>
-                  <p className="text-sm font-medium">{log.action}</p>
-                  <p className="text-xs text-muted-foreground font-mono mt-1">
-                    Booking: {log.booking_id || "N/A"} | User: {log.user_id || "N/A"}
-                  </p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                      Action
+                    </div>
+                    <div className="text-sm font-medium">{log.action}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                      User
+                    </div>
+                    <div className="text-sm font-mono truncate" title={log.profiles?.email}>
+                      {log.profiles?.email || log.user_id?.split("-")[0] || "System"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                      Booking
+                    </div>
+                    <div className="text-sm font-mono">
+                      {log.booking_id?.split("-")[0] || "N/A"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                      Status
+                    </div>
+                    <div className="text-sm">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "font-normal text-[10px]",
+                          log.action.toLowerCase().includes("fail") ||
+                            log.action.toLowerCase().includes("cancel")
+                            ? "text-destructive border-destructive/30"
+                            : "text-primary border-primary/30",
+                        )}
+                      >
+                        {log.action.toLowerCase().includes("fail") ||
+                        log.action.toLowerCase().includes("cancel")
+                          ? "Failed"
+                          : "Success"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                      Time
+                    </div>
+                    <div className="text-sm truncate">
+                      {format(new Date(log.created_at), "MMM d, yyyy h:mm a")}
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {format(new Date(log.created_at), "PPP p")}
-                </span>
               </div>
             ))
           )}
         </div>
       </CardContent>
+
+      <Dialog
+        open={isExportOpen}
+        onOpenChange={(open) => {
+          setIsExportOpen(open);
+          if (!open) setShowGoogleSetup(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-[550px] border-border bg-background p-0 overflow-hidden shadow-2xl">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="text-xl">Export Logs</DialogTitle>
+            <DialogDescription>Select a date range to export audit logs.</DialogDescription>
+          </DialogHeader>
+
+          {showGoogleSetup ? (
+            <div className="p-6 pt-0 space-y-4">
+              <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-sm text-foreground/90 leading-relaxed">
+                <h4 className="font-semibold text-primary mb-2 flex items-center gap-2">
+                  <Table2 className="size-4" /> Google Sheets Setup Required
+                </h4>
+                <p className="mb-2">
+                  Google Sheets integration is currently not configured for this instance. To enable
+                  direct Google Sheets exports, you must:
+                </p>
+                <ol className="list-decimal pl-5 space-y-1 text-xs text-muted-foreground">
+                  <li>
+                    Create a Google Cloud Project and enable the Google Sheets API & Google Drive
+                    API.
+                  </li>
+                  <li>Configure an OAuth Consent Screen and create Web Application Credentials.</li>
+                  <li>Add your Supabase Edge Function URL as the Authorized Redirect URI.</li>
+                  <li>
+                    Set{" "}
+                    <code className="text-primary bg-background border border-border px-1 py-0.5 rounded">
+                      GOOGLE_CLIENT_ID
+                    </code>{" "}
+                    and{" "}
+                    <code className="text-primary bg-background border border-border px-1 py-0.5 rounded">
+                      GOOGLE_CLIENT_SECRET
+                    </code>{" "}
+                    as environment variables in Supabase.
+                  </li>
+                </ol>
+                <p className="mt-3">
+                  In the meantime, please use the <strong>Excel File</strong> export option.
+                </p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowGoogleSetup(false)}>
+                  Back
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="p-6 pt-0 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Start Date
+                  </label>
+                  <DatePickerPopover
+                    value={startDate}
+                    onChange={setStartDate}
+                    placeholder="Select start date"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    End Date
+                  </label>
+                  <DatePickerPopover
+                    value={endDate}
+                    onChange={setEndDate}
+                    placeholder="Select end date"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Quick Options
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() => handleQuickRange(startOfDay(now), endOfDay(now))}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() =>
+                      handleQuickRange(startOfDay(subDays(now, 1)), endOfDay(subDays(now, 1)))
+                    }
+                  >
+                    Yesterday
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() => handleQuickRange(startOfWeek(now), endOfWeek(now))}
+                  >
+                    This Week
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() =>
+                      handleQuickRange(startOfWeek(subWeeks(now, 1)), endOfWeek(subWeeks(now, 1)))
+                    }
+                  >
+                    Last Week
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() => handleQuickRange(startOfMonth(now), endOfMonth(now))}
+                  >
+                    This Month
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() =>
+                      handleQuickRange(
+                        startOfMonth(subMonths(now, 1)),
+                        endOfMonth(subMonths(now, 1)),
+                      )
+                    }
+                  >
+                    Last Month
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() => handleQuickRange(startOfDay(subDays(now, 7)), endOfDay(now))}
+                  >
+                    Last 7 Days
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 text-xs bg-card/60"
+                    onClick={() => handleQuickRange(startOfDay(subDays(now, 30)), endOfDay(now))}
+                  >
+                    Last 30 Days
+                  </Button>
+                </div>
+              </div>
+
+              <DialogFooter className="flex-col sm:flex-row gap-2 mt-4 pt-4 border-t border-border/40">
+                <Button variant="ghost" onClick={() => setIsExportOpen(false)}>
+                  Cancel
+                </Button>
+                <div className="flex gap-2 flex-1 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => doExport("google")}
+                    disabled={exporting}
+                    className="border-primary/40 text-primary hover:bg-primary/10"
+                  >
+                    <Table2 className="size-4 mr-2" /> Google Sheets
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={() => doExport("excel")}
+                    disabled={exporting}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                  >
+                    {exporting ? (
+                      <RefreshCw className="size-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="size-4 mr-2" />
+                    )}
+                    Excel File
+                  </Button>
+                </div>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -366,3 +969,184 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 
 export * from "./UsersSection";
+
+export function LockerStatusSection() {
+  const {
+    data: locker,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["admin_locker"],
+    queryFn: async () => {
+      if (!supabase) throw new Error("No supabase");
+      const { data, error } = await supabase.from("lockers").select("*").limit(1).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="panel fade-up">
+        <CardContent className="flex h-32 items-center justify-center">
+          <div className="animate-pulse">Loading locker data...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !locker) {
+    return (
+      <Card className="panel border-dashed fade-up">
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="rounded-full bg-muted/20 p-4 mb-4">
+            <Box className="size-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold">Locker data not available</h3>
+          <p className="text-sm text-muted-foreground mt-2 max-w-md">
+            Waiting for IoT synchronization. The "lockers" table with fields (locker_state,
+            battery_percentage, battery_status, is_charging, iot_connection_status, last_updated) is
+            required.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="panel max-w-md mx-auto fade-up">
+      <CardHeader>
+        <CardTitle>Locker Status</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Locker State</span>
+          <Badge variant="outline">{locker.locker_state || "Unknown"}</Badge>
+        </div>
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Backup Battery</span>
+          <span className="font-semibold">
+            {locker.battery_percentage != null ? `${locker.battery_percentage}%` : "N/A"}
+          </span>
+        </div>
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Battery Status</span>
+          <span>{locker.battery_status || "Unknown"}</span>
+        </div>
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Charging</span>
+          <span>{locker.is_charging ? "Yes" : "No"}</span>
+        </div>
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">IoT Status</span>
+          <Badge variant={locker.iot_connection_status === "Connected" ? "default" : "secondary"}>
+            {locker.iot_connection_status || "Unknown"}
+          </Badge>
+        </div>
+        <div className="flex justify-between items-center text-xs text-muted-foreground pt-2">
+          <span>Last Updated</span>
+          <span>{locker.last_updated ? format(new Date(locker.last_updated), "PPpp") : "N/A"}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function KeyStatusSection() {
+  const {
+    data: keyData,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["admin_keys"],
+    queryFn: async () => {
+      if (!supabase) throw new Error("No supabase");
+      const { data, error } = await supabase.from("keys").select("*").limit(1).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="panel fade-up">
+        <CardContent className="flex h-32 items-center justify-center">
+          <div className="animate-pulse">Loading key data...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !keyData) {
+    return (
+      <Card className="panel border-dashed fade-up">
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="rounded-full bg-muted/20 p-4 mb-4">
+            <Key className="size-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold">Key status not available</h3>
+          <p className="text-sm text-muted-foreground mt-2 max-w-md">
+            Key tracking data has not been added or integrated with the backend yet. The "keys"
+            table with fields (key_id, status, assigned_locker, current_booking, last_updated) is
+            required.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="panel max-w-md mx-auto fade-up">
+      <CardHeader>
+        <div className="flex items-center justify-between w-full">
+          <CardTitle>Key Status</CardTitle>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={async () => {
+              try {
+                await refetch();
+              } catch (e) {
+                toast.error("Failed to refresh key status");
+              }
+            }}
+            disabled={isRefetching}
+            title="Refresh Key Status"
+            aria-label="Refresh Key Status"
+          >
+            <RefreshCw className={cn("size-4", isRefetching && "animate-spin")} />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Key Status</span>
+          <Badge variant="outline">{keyData.status || "Unknown"}</Badge>
+        </div>
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Key ID</span>
+          <span className="font-semibold">{keyData.key_id || "N/A"}</span>
+        </div>
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Assigned Locker</span>
+          <span>{keyData.assigned_locker || "N/A"}</span>
+        </div>
+        <div className="flex justify-between items-center border-b border-border/10 pb-2">
+          <span className="text-sm text-muted-foreground">Current Booking</span>
+          <span>{keyData.current_booking || "None"}</span>
+        </div>
+        <div className="flex justify-between items-center text-xs text-muted-foreground pt-2">
+          <span>Last Updated</span>
+          <span>
+            {keyData.last_updated ? format(new Date(keyData.last_updated), "PPpp") : "N/A"}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

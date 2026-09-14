@@ -17,7 +17,7 @@ export const Route = createFileRoute("/member")({
 });
 
 function MemberDashboard() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, role } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
 
@@ -56,6 +56,14 @@ function MemberDashboard() {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (role === "execom") {
+    return <Navigate to="/execom" replace />;
   }
 
   return (

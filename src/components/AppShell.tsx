@@ -17,13 +17,20 @@ const NAV: NavItem[] = [
     to: "/member",
     label: "Member Dashboard",
     icon: CalendarClock,
-    roles: ["member", "execom", "admin"],
+    roles: ["member"],
   },
-  { to: "/execom", label: "Execom Dashboard", icon: ShieldCheck, roles: ["execom", "admin"] },
-  { to: "/admin", label: "Admin Console", icon: Users, roles: ["admin"] },
+  { to: "/execom", label: "ExeCom Dashboard", icon: ShieldCheck, roles: ["execom"] },
 ];
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  customSidebar,
+  hideMobileNav,
+}: {
+  children: ReactNode;
+  customSidebar?: ReactNode;
+  hideMobileNav?: boolean;
+}) {
   const { profile, user, role, signOut } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -47,37 +54,45 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           </div>
 
-          <nav className="mt-3 space-y-1 px-3">
-            {links.map(({ to, label, icon: Icon }) => {
-              const active = pathname === to;
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={cn(
-                    "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    active
-                      ? "border-l-2 border-primary bg-primary/15 text-primary"
-                      : "border-l-2 border-transparent text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-4" />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+          {customSidebar ? (
+            customSidebar
+          ) : (
+            <>
+              <nav className="mt-3 space-y-1 px-3">
+                {links.map(({ to, label, icon: Icon }) => {
+                  const active = pathname === to;
+                  return (
+                    <Link
+                      key={to}
+                      to={to}
+                      className={cn(
+                        "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                        active
+                          ? "border-l-2 border-primary bg-primary/15 text-primary"
+                          : "border-l-2 border-transparent text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="size-4" />
+                      {label}
+                    </Link>
+                  );
+                })}
+              </nav>
 
-          {/* User profile card */}
-          <div className="mt-auto p-4">
-            <div className="rounded-lg border border-sidebar-border bg-card/60 p-3 glow-subtle">
-              <p className="truncate text-sm font-medium">{profile?.full_name ?? "C-ROB user"}</p>
-              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-              <Badge variant="secondary" className="mt-2">
-                {roleLabel[role]}
-              </Badge>
-            </div>
-          </div>
+              {/* User profile card */}
+              <div className="mt-auto p-4">
+                <div className="rounded-lg border border-sidebar-border bg-card/60 p-3 glow-subtle">
+                  <p className="truncate text-sm font-medium">
+                    {profile?.full_name ?? "C-ROB user"}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+                  <Badge variant="secondary" className="mt-2">
+                    {roleLabel[role]}
+                  </Badge>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </aside>
 
@@ -89,7 +104,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             <CrobLogo size="xs" showSubtext={false} />
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden text-xs text-muted-foreground sm:inline">{user?.email}</span>
+            <div className="hidden sm:flex flex-col items-end text-right mr-2">
+              <span className="text-sm font-semibold leading-none text-foreground">
+                {profile?.full_name ||
+                  user?.email
+                    ?.split("@")[0]
+                    ?.replace(/[^a-zA-Z]/g, " ")
+                    ?.trim() ||
+                  "Admin"}
+              </span>
+              <span className="text-xs text-muted-foreground mt-1 leading-none">{user?.email}</span>
+            </div>
             <NotificationsPanel />
             <Button
               variant="outline"
@@ -105,23 +130,25 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         {/* Mobile nav */}
-        <nav className="flex gap-2 overflow-x-auto border-b border-border px-4 py-2 md:hidden">
-          {links.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className={cn(
-                "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs transition-colors",
-                pathname === to
-                  ? "border border-primary/30 bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:bg-card/60",
-              )}
-            >
-              <Icon className="size-3" />
-              {label}
-            </Link>
-          ))}
-        </nav>
+        {!hideMobileNav && (
+          <nav className="flex gap-2 overflow-x-auto border-b border-border px-4 py-2 md:hidden">
+            {links.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className={cn(
+                  "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs transition-colors",
+                  pathname === to
+                    ? "border border-primary/30 bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:bg-card/60",
+                )}
+              >
+                <Icon className="size-3" />
+                {label}
+              </Link>
+            ))}
+          </nav>
+        )}
 
         <main className="flex-1 p-5 md:p-8">{children}</main>
       </div>

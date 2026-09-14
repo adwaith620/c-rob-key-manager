@@ -64,8 +64,8 @@ const formSchema = z
       if (!data.date || !data.time) return false;
       const [hours, minutes] = data.time.split(":");
       const combined = setMinutes(
-        setHours(new Date(data.date), parseInt(hours, 10)),
-        parseInt(minutes, 10),
+        setHours(new Date(data.date), parseInt(hours || "0", 10)),
+        parseInt(minutes || "0", 10),
       );
       const selected = combined.getTime();
       const now = new Date().getTime() - 5 * 60 * 1000;
@@ -146,8 +146,8 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
 
   if (value && value.includes(":")) {
     const [h24, m] = value.split(":");
-    const hNum = parseInt(h24, 10);
-    initialM = m;
+    const hNum = parseInt(h24 || "0", 10);
+    initialM = m || "00";
     initialAmPm = hNum >= 12 ? "PM" : "AM";
     let h12Num = hNum % 12;
     if (h12Num === 0) h12Num = 12;
@@ -162,8 +162,8 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
   useEffect(() => {
     if (isOpen && value && value.includes(":")) {
       const [h24, m] = value.split(":");
-      const hNum = parseInt(h24, 10);
-      setSelectedMinute(m);
+      const hNum = parseInt(h24 || "0", 10);
+      setSelectedMinute(m || "00");
       setSelectedAmPm(hNum >= 12 ? "PM" : "AM");
       let h12Num = hNum % 12;
       if (h12Num === 0) h12Num = 12;
@@ -191,7 +191,7 @@ function TimePickerPopover({ value, onChange }: { value?: string; onChange: (v: 
   let displayValue = "";
   if (value && value.includes(":")) {
     const [h24, m2] = value.split(":");
-    const hNum = parseInt(h24, 10);
+    const hNum = parseInt(h24 || "0", 10);
     const pm = hNum >= 12;
     let h12 = hNum % 12;
     if (h12 === 0) h12 = 12;
@@ -311,8 +311,8 @@ export function BookingForm() {
 
       const [hours, minutes] = values.time.split(":");
       const localDate = setMinutes(
-        setHours(new Date(values.date), parseInt(hours, 10)),
-        parseInt(minutes, 10),
+        setHours(new Date(values.date), parseInt(hours || "0", 10)),
+        parseInt(minutes || "0", 10),
       );
       const isoString = localDate.toISOString(); // converts to UTC
 

@@ -25,6 +25,8 @@ import {
   BookingsSection,
   LogsSection,
   UsersSection,
+  LockerStatusSection,
+  KeyStatusSection,
 } from "@/components/admin/AdminComponents";
 
 export const Route = createFileRoute("/admin")({
@@ -33,12 +35,13 @@ export const Route = createFileRoute("/admin")({
 
 const TABS = [
   { id: "overview", label: "Overview", icon: Activity },
-  { id: "bookings", label: "Bookings", icon: Calendar },
-  { id: "lockers", label: "Lockers", icon: Box },
-  { id: "keys", label: "Keys", icon: Key },
-  { id: "members", label: "Members", icon: Users },
-  { id: "execom", label: "ExeCom", icon: ShieldCheck },
-  { id: "fingerprints", label: "Fingerprint", icon: Fingerprint },
+  { id: "bookings", label: "Booking Requests", icon: Calendar },
+  { id: "lockers", label: "Locker Status", icon: Box },
+  { id: "keys", label: "Key Status", icon: Key },
+  { id: "members", label: "Member List", icon: Users },
+  { id: "execom", label: "ExeCom Members", icon: ShieldCheck },
+  { id: "admins", label: "Admins", icon: ShieldAlert },
+  { id: "fingerprints", label: "Fingerprint Data", icon: Fingerprint },
   { id: "logs", label: "Logs", icon: FileText },
   { id: "settings", label: "Settings", icon: Settings },
 ];
@@ -49,89 +52,125 @@ function AdminDashboard() {
 
   if (loading) return null;
 
-  if (!user || role !== "admin") {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role !== "admin") {
+    if (role === "execom") return <Navigate to="/execom" replace />;
     return <Navigate to="/member" replace />;
   }
 
-  return (
-    <AppShell>
-      <PageHeading title="Admin Dashboard" subtitle="System administration and oversight." />
+  const customSidebar = (
+    <>
+      <div className="px-5 mb-4">
+        <h2 className="text-lg font-bold font-display text-primary/90 tracking-tight">
+          Admin Dashboard
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1 leading-snug">
+          System administration and oversight.
+        </p>
+      </div>
+      <nav className="space-y-1 px-3">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium whitespace-nowrap ${
+                isActive
+                  ? "bg-primary/15 text-primary border-l-2 border-primary"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground border-l-2 border-transparent"
+              }`}
+            >
+              <Icon className="size-4 shrink-0" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
 
-      <AnimatedSection className="flex flex-col md:flex-row gap-6 mt-6">
-        {/* Sidebar */}
-        <aside className="w-full md:w-64 shrink-0">
-          <div className="flex flex-row md:flex-col gap-1 overflow-x-auto pb-2 md:pb-0 custom-scrollbar">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors text-sm font-medium whitespace-nowrap ${
-                    isActive
-                      ? "bg-primary/20 text-primary border-l-2 border-primary"
-                      : "text-muted-foreground hover:bg-card/40 hover:text-foreground border-l-2 border-transparent"
-                  }`}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 hidden md:block">
-            <Card className="panel bg-card/30">
-              <CardContent className="p-4">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <ShieldCheck className="size-4 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">Admin Account</p>
-                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={signOut}
-                    className="w-full mt-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <LogOut className="size-4 mr-2" />
-                    Sign Out
-                  </Button>
+      <div className="mt-auto p-4 hidden md:block">
+        <Card className="panel border-sidebar-border bg-card/60 glow-subtle">
+          <CardContent className="p-3">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <ShieldAlert className="size-4 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </aside>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">Admin Account</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive h-8 text-xs"
+              >
+                <LogOut className="size-3 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
 
-        {/* Content */}
+  return (
+    <AppShell customSidebar={customSidebar} hideMobileNav={true}>
+      <div className="flex gap-2 overflow-x-auto border-b border-border/50 pb-2 mb-6 md:hidden custom-scrollbar">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-xs font-medium whitespace-nowrap ${
+                isActive
+                  ? "bg-primary/15 text-primary border border-primary/30"
+                  : "text-muted-foreground bg-card/40 border border-transparent"
+              }`}
+            >
+              <Icon className="size-3 shrink-0" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatedSection className="flex flex-col gap-6">
         <main className="flex-1 min-w-0">
           {activeTab === "overview" && <OverviewSection />}
           {activeTab === "bookings" && <BookingsSection />}
-          {activeTab === "members" && <UsersSection />}
+          {activeTab === "members" && <UsersSection filterRole="member" title="Member List" />}
+          {activeTab === "admins" && <UsersSection filterRole="admin" title="Admins" />}
+          {activeTab === "execom" && <UsersSection filterRole="execom" title="ExeCom Members" />}
           {activeTab === "logs" && <LogsSection />}
 
-          {["lockers", "keys", "execom", "fingerprints"].includes(activeTab) && (
-            <Card className="panel border-dashed">
+          {activeTab === "lockers" && <LockerStatusSection />}
+
+          {activeTab === "fingerprints" && (
+            <Card className="panel border-dashed fade-up">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="rounded-full bg-muted/20 p-4 mb-4">
-                  <Activity className="size-8 text-muted-foreground" />
+                  <Fingerprint className="size-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold">No data available</h3>
                 <p className="text-sm text-muted-foreground mt-2 max-w-md">
-                  Official {activeTab} data has not been added or integrated with the backend yet.
+                  Fingerprint data has not been integrated yet.
                 </p>
               </CardContent>
             </Card>
           )}
 
           {activeTab === "settings" && (
-            <Card className="panel border-destructive/30">
+            <Card className="panel border-destructive/30 fade-up">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-destructive">
                   <ShieldAlert className="size-5" /> Danger Zone

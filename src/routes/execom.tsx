@@ -17,6 +17,7 @@ export const Route = createFileRoute("/execom")({
 
 function ExecomDashboard() {
   const { user, profile, role, loading } = useAuth();
+
   const queryClient = useQueryClient();
 
   // 1. Fetch all active key sessions lab-wide
@@ -102,7 +103,12 @@ function ExecomDashboard() {
   if (loading) return null;
 
   // Protect route
-  if (!user || (role !== "execom" && role !== "admin")) {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role !== "execom") {
+    if (role === "admin") return <Navigate to="/admin" replace />;
     return <Navigate to="/member" replace />;
   }
 
