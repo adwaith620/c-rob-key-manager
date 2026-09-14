@@ -12,10 +12,7 @@ export const Route = createFileRoute("/execom/settings")({
 function SettingsPage() {
   return (
     <>
-      <ExecomPageHeading
-        title="Settings"
-        subtitle="Configure dashboard and system preferences."
-      />
+      <ExecomPageHeading title="Settings" subtitle="Configure dashboard and system preferences." />
 
       <div className="grid gap-6">
         <Card className="panel">
@@ -27,14 +24,18 @@ function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>New Request Alerts</Label>
-                <div className="text-sm text-muted-foreground">Receive an alert when a new project request is submitted.</div>
+                <div className="text-sm text-muted-foreground">
+                  Receive an alert when a new project request is submitted.
+                </div>
               </div>
               <Switch defaultChecked />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Overdue Key Alerts</Label>
-                <div className="text-sm text-muted-foreground">Get notified when a key is not returned on time.</div>
+                <div className="text-sm text-muted-foreground">
+                  Get notified when a key is not returned on time.
+                </div>
               </div>
               <Switch defaultChecked />
             </div>
@@ -48,8 +49,12 @@ function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="outline" className="w-full sm:w-auto">Export System Data</Button>
-              <Button variant="destructive" className="w-full sm:w-auto">Reset All Keys (Emergency)</Button>
+              <Button variant="outline" className="w-full sm:w-auto">
+                Export System Data
+              </Button>
+              <Button variant="destructive" className="w-full sm:w-auto">
+                Reset All Keys (Emergency)
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -1,108 +1,63 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { ShieldCheck, ArrowRightLeft, User, Clock } from "lucide-react";
-import { formatDistanceToNow, isAfter, addHours } from "date-fns";
+import {
+  Activity,
+  Box,
+  Calendar,
+  Key,
+  Users,
+  ShieldCheck,
+  Fingerprint,
+  FileText,
+  Settings,
+  ShieldAlert,
+  LogOut,
+} from "lucide-react";
+import { useState } from "react";
 
 import { AppShell, PageHeading } from "@/components/AppShell";
 import { AnimatedSection } from "@/components/crob/AnimatedSection";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GlobalKeyStatus } from "@/components/GlobalKeyStatus";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
+
+import {
+  OverviewSection,
+  BookingsSection,
+  LogsSection,
+  UsersSection,
+  LockerStatusSection,
+  KeyStatusSection,
+} from "@/components/admin/AdminComponents";
 
 export const Route = createFileRoute("/execom")({
   component: ExecomDashboard,
 });
 
+const TABS = [
+  { id: "overview", label: "Overview", icon: Activity },
+  { id: "bookings", label: "Booking Requests", icon: Calendar },
+  { id: "keys", label: "Key Status", icon: Key },
+  { id: "members", label: "Member List", icon: Users },
+  { id: "execom", label: "ExeCom Members", icon: ShieldCheck },
+  { id: "logs", label: "Logs", icon: FileText },
+  { id: "settings", label: "Settings", icon: Settings },
+];
+
 function ExecomDashboard() {
-  const { user, profile, role, loading } = useAuth();
+  const { user, profile, role, loading, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const queryClient = useQueryClient();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-background items-center justify-center flex-col gap-4">
+        <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-muted-foreground font-display tracking-wider animate-pulse">
+          Loading C-ROB Smart Key Locker...
+        </div>
+      </div>
+    );
+  }
 
-  // 1. Fetch all active key sessions lab-wide
-  const { data: activeSessions, isLoading } = useQuery({
-    queryKey: ["execom_active_sessions"],
-    queryFn: async () => {
-      if (!supabase) return [];
-      const { data, error } = await supabase
-        .from("key_sessions")
-        .select(
-          "*, holder:profiles!current_holder(id, full_name, role, email), bookings(start_time, duration_hours, user_id, booker:profiles!user_id(id, full_name))",
-        )
-        .eq("status", "active")
-        .order("started_at", { ascending: false });
-
-      if (error) console.error(error);
-      return data || [];
-    },
-    refetchInterval: 10000,
-  });
-
-  // 2. Fetch pending handovers we initiated
-  const { data: pendingHandovers } = useQuery({
-    queryKey: ["execom_pending_handovers"],
-    queryFn: async () => {
-      if (!user || !supabase) return [];
-      const { data } = await supabase
-        .from("handovers")
-        .select("*")
-        .eq("from_user_id", user.id)
-        .eq("status", "pending_acceptance");
-      return data || [];
-    },
-    refetchInterval: 10000,
-  });
-
-  const requestTakeover = useMutation({
-    mutationFn: async ({
-      sessionId,
-      currentHolderId,
-    }: {
-      sessionId: string;
-      currentHolderId: string;
-    }) => {
-      const expiresAt = new Date(Date.now() + 10 * 60000).toISOString();
-      const { error } = await supabase!.from("handovers").insert({
-        session_id: sessionId,
-        from_user_id: currentHolderId,
-        to_user_id: user!.id,
-        status: "pending_acceptance",
-        expires_at: expiresAt,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["execom_active_sessions"] }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (e: any) => alert(e.message),
-  });
-
-  const returnAuthority = useMutation({
-    mutationFn: async ({
-      sessionId,
-      originalBookerId,
-    }: {
-      sessionId: string;
-      originalBookerId: string;
-    }) => {
-      const expiresAt = new Date(Date.now() + 10 * 60000).toISOString();
-      const { error } = await supabase!.from("handovers").insert({
-        session_id: sessionId,
-        from_user_id: user!.id,
-        to_user_id: originalBookerId,
-        status: "pending_acceptance",
-        expires_at: expiresAt,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["execom_pending_handovers"] }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (e: any) => alert(e.message),
-  });
-
-  if (loading) return null;
-
-  // Protect route
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -112,119 +67,119 @@ function ExecomDashboard() {
     return <Navigate to="/member" replace />;
   }
 
-  return (
-    <AppShell>
-      <PageHeading
-        title="Execom Dashboard"
-        subtitle="Lab-wide overview of physical key custody."
-        right={<GlobalKeyStatus />}
-      />
+  const customSidebar = (
+    <>
+      <div className="px-5 mb-4">
+        <h2 className="text-lg font-bold font-display text-primary/90 tracking-tight">
+          ExeCom Dashboard
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1 leading-snug">
+          Executive committee operations and monitoring.
+        </p>
+      </div>
+      <nav className="space-y-1 px-3">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium whitespace-nowrap ${
+                isActive
+                  ? "bg-primary/15 text-primary border-l-2 border-primary"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground border-l-2 border-transparent"
+              }`}
+            >
+              <Icon className="size-4 shrink-0" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
 
-      <AnimatedSection animation="fade-in" delay={100} className="grid gap-6">
-        <Card className="panel border-warning/40 bg-warning/5 relative overflow-hidden transition-all duration-300">
-          <div className="absolute top-0 left-0 h-full w-1/2 bg-gradient-to-r from-warning/10 to-transparent pointer-events-none" />
-          <CardHeader className="relative z-10">
-            <CardTitle className="flex items-center gap-2 text-warning">
-              <ShieldCheck className="size-5" />
-              Active Key Custody
-            </CardTitle>
-            <CardDescription className="text-foreground/70">
-              Real-time view of who physically holds the C-ROB key right now.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            {isLoading ? (
-              <div className="text-sm text-muted-foreground animate-pulse">
-                Scanning lab status...
+      <div className="mt-auto p-4 hidden md:block">
+        <Card className="panel border-sidebar-border bg-card/60 glow-subtle">
+          <CardContent className="p-3">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <ShieldAlert className="size-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {profile?.full_name || "ExeCom Member"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  <p className="text-[10px] uppercase font-bold text-primary tracking-wider mt-0.5">
+                    ExeCom Account
+                  </p>
+                </div>
               </div>
-            ) : activeSessions?.length === 0 ? (
-              <div className="text-sm text-muted-foreground">
-                The key is currently safely inside the locker.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activeSessions?.map((session) => {
-                  const holder = session.holder as any;
-                  const booking = session.bookings as any;
-                  const booker = booking.booker as any;
-
-                  const isHolderAdmin = holder.role === "admin" || holder.role === "execom";
-                  const end = addHours(new Date(booking.start_time), booking.duration_hours);
-                  const isOverdue = isAfter(new Date(), end);
-
-                  const weAreHolder = holder.id === user?.id;
-
-                  return (
-                    <div
-                      key={session.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-warning/20 rounded-xl bg-background/50 backdrop-blur-sm shadow-sm"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2 font-medium text-foreground">
-                          <User className="size-4 text-warning" />
-                          {holder.full_name}
-                          {isHolderAdmin && (
-                            <span className="text-[10px] uppercase bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold tracking-wider border border-primary/30">
-                              {holder.role}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          Booked by: <span className="text-foreground/80">{booker.full_name}</span>{" "}
-                          • Started {formatDistanceToNow(new Date(session.started_at))} ago
-                        </div>
-                        {isOverdue && (
-                          <div className="flex items-center gap-1 text-xs text-destructive mt-2 font-semibold">
-                            <Clock className="size-3" /> Overdue by {formatDistanceToNow(end)}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {weAreHolder ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-warning/10 text-warning hover:bg-warning/20 border-warning/30 transition-colors"
-                            onClick={() =>
-                              returnAuthority.mutate({
-                                sessionId: session.id,
-                                originalBookerId: booker.id,
-                              })
-                            }
-                            disabled={holder.id === booker.id} // Don't return if we were the booker
-                          >
-                            <ArrowRightLeft className="mr-2 size-4" />
-                            Return Authority to Booker
-                          </Button>
-                        ) : !isHolderAdmin ? (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="shadow-sm glow-subtle hover:bg-destructive/90 transition-all"
-                            onClick={() =>
-                              requestTakeover.mutate({
-                                sessionId: session.id,
-                                currentHolderId: holder.id,
-                              })
-                            }
-                          >
-                            <ShieldCheck className="mr-2 size-4" />
-                            Request Takeover
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground uppercase font-semibold border border-border/50 px-2 py-1 rounded-md bg-background/50">
-                            Under Execom Auth
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive h-8 text-xs"
+              >
+                <LogOut className="size-3 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </CardContent>
         </Card>
+      </div>
+    </>
+  );
+
+  return (
+    <AppShell customSidebar={customSidebar} hideMobileNav={true}>
+      <div className="flex gap-2 overflow-x-auto border-b border-border/50 pb-2 mb-6 md:hidden custom-scrollbar">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-xs font-medium whitespace-nowrap ${
+                isActive
+                  ? "bg-primary/15 text-primary border border-primary/30"
+                  : "text-muted-foreground bg-card/40 border border-transparent"
+              }`}
+            >
+              <Icon className="size-3 shrink-0" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatedSection className="flex flex-col gap-6">
+        <main className="flex-1 min-w-0">
+          {activeTab === "overview" && <OverviewSection />}
+          {activeTab === "bookings" && <BookingsSection />}
+          {activeTab === "members" && <UsersSection filterRole="member" title="Member List" />}
+          {activeTab === "execom" && <UsersSection filterRole="execom" title="ExeCom Members" />}
+          {activeTab === "logs" && <LogsSection />}
+
+          {activeTab === "settings" && (
+            <Card className="panel border-primary/30 fade-up">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Settings className="size-5" /> Preferences
+                </CardTitle>
+                <CardDescription>View account preferences and session details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-foreground/80">
+                  Settings are currently managed via the Supabase Dashboard. Role updates and
+                  physical overrides require direct database access.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </main>
       </AnimatedSection>
     </AppShell>
   );

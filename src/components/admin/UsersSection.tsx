@@ -6,6 +6,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
   Table,
   TableBody,
   TableCell,
@@ -24,12 +33,19 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 export function UsersSection({ filterRole, title }: { filterRole?: string; title?: string } = {}) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [roleConfirm, setRoleConfirm] = useState<{
+    userId: string;
+    newRole: string;
+    userName: string;
+    currentRole: string;
+  } | null>(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin_users", filterRole],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!supabase) throw new Error("No supabase");
       let query = supabase.from("profiles").select("*").order("created_at", { ascending: false });
@@ -45,11 +61,18 @@ export function UsersSection({ filterRole, title }: { filterRole?: string; title
   const updateRole = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
       if (user && userId === user.id) throw new Error("You cannot change your own role.");
-      const { error } = await supabase!.from("profiles").update({ role: newRole }).eq("id", userId);
+      const { error, data } = await supabase!.rpc("admin_update_user_role", {
+        target_user_id: userId,
+        new_role: newRole,
+      });
+      if (error) throw error;
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_users_count"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_execom_count"] });
+      setRoleConfirm(null);
       toast.success("User role updated");
     },
     onError: (e: any) => toast.error(e.message),
@@ -63,91 +86,148 @@ export function UsersSection({ filterRole, title }: { filterRole?: string; title
     ) || [];
 
   return (
-    <Card className="panel fade-up">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{title || "Member Management"}</CardTitle>
-        <div className="relative w-64">
-          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <Input
-            placeholder="Search name or email..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto bg-card/20 rounded-md border border-border/30">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Role</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow className="animate-pulse">
-                  <TableCell colSpan={4} className="text-center h-24">
-                    Loading members...
-                  </TableCell>
-                </TableRow>
-              ) : filteredUsers.length === 0 ? (
+    <>
+      <Card className="panel fade-up">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>{title || "Member Management"}</CardTitle>
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search name or email..."
+              className="pl-8"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto bg-card/20 rounded-md border border-border/30">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                    No members found
-                  </TableCell>
+                  <TableHead>User</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Role</TableHead>
                 </TableRow>
-              ) : (
-                filteredUsers.map((u: any) => {
-                  const isSelf = u.id === user?.id;
-                  return (
-                    <TableRow key={u.id}>
-                      <TableCell>
-                        <div className="font-medium">{u.full_name}</div>
-                        <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                          {u.id.split("-")[0]}...
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{u.email || "�"}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {u.phone || "No phone"}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(u.created_at), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={u.role}
-                          onValueChange={(val) => updateRole.mutate({ userId: u.id, newRole: val })}
-                          disabled={isSelf || updateRole.isPending}
-                        >
-                          <SelectTrigger className="w-[120px] h-8 text-xs font-semibold">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="execom" className="text-warning">
-                              Execom
-                            </SelectItem>
-                            <SelectItem value="admin" className="text-destructive font-bold">
-                              Admin
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow className="animate-pulse">
+                    <TableCell colSpan={4} className="text-center h-24">
+                      Loading members...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                      No members found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((u: any) => {
+                    const isSelf = u.id === user?.id;
+                    return (
+                      <TableRow key={u.id}>
+                        <TableCell>
+                          <div className="font-medium">{u.full_name}</div>
+                          <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                            {u.id.split("-")[0]}...
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{u.email || "�"}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {u.phone || "No phone"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {format(new Date(u.created_at), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          {role === "admin" ? (
+                            <Select
+                              value={u.role}
+                              onValueChange={(val) =>
+                                updateRole.mutate({ userId: u.id, newRole: val })
+                              }
+                              disabled={isSelf || updateRole.isPending}
+                            >
+                              <SelectTrigger className="w-[120px] h-8 text-xs font-semibold">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="member">Member</SelectItem>
+                                <SelectItem value="execom">ExeCom</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-xs uppercase font-bold tracking-wider px-2 py-1 bg-muted rounded-md text-muted-foreground border border-border/50">
+                              {u.role}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!roleConfirm} onOpenChange={(open) => !open && setRoleConfirm(null)}>
+        <DialogContent className="border-sidebar-border bg-card/95 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle>Confirm Role Change</DialogTitle>
+            <DialogDescription className="pt-3">
+              Are you sure you want to change this user's role?
+              <div className="mt-4 p-3 bg-muted/50 rounded-md space-y-2 text-sm text-foreground">
+                <p>
+                  <span className="text-muted-foreground font-medium">User:</span>{" "}
+                  {roleConfirm?.userName}
+                </p>
+                <p>
+                  <span className="text-muted-foreground font-medium">Current role:</span>{" "}
+                  <span className="uppercase font-bold text-muted-foreground">
+                    {roleConfirm?.currentRole}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-muted-foreground font-medium">New role:</span>{" "}
+                  <span className="uppercase font-bold text-primary">{roleConfirm?.newRole}</span>
+                </p>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                This change will be saved permanently in Supabase until an authorized Admin changes
+                it again.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setRoleConfirm(null)}
+              disabled={updateRole.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => {
+                if (roleConfirm) {
+                  updateRole.mutate({ userId: roleConfirm.userId, newRole: roleConfirm.newRole });
+                }
+              }}
+              disabled={updateRole.isPending}
+            >
+              {updateRole.isPending ? "Updating..." : "Confirm Change"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

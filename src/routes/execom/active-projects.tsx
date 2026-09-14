@@ -15,9 +15,10 @@ export const Route = createFileRoute("/execom/active-projects")({
 function ActiveProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredProjects = mockActiveProjects.filter(p => 
-    p.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.responsibleMember.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProjects = mockActiveProjects.filter(
+    (p) =>
+      p.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.responsibleMember.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -30,8 +31,8 @@ function ActiveProjectsPage() {
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search active projects..." 
+          <Input
+            placeholder="Search active projects..."
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -65,7 +66,10 @@ function ActiveProjectsPage() {
                 </tr>
               ) : (
                 filteredProjects.map((project) => (
-                  <tr key={project.id} className="hover:bg-muted/30 transition-colors cursor-pointer">
+                  <tr
+                    key={project.id}
+                    className="hover:bg-muted/30 transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-4 font-medium text-primary">{project.projectName}</td>
                     <td className="px-6 py-4">{project.teamSize} members</td>
                     <td className="px-6 py-4">{project.assignedKey}</td>

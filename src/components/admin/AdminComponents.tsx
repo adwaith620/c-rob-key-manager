@@ -11,6 +11,7 @@ import {
 import { CalendarIcon, Download, Table2 } from "lucide-react";
 import {
   startOfDay,
+  addHours,
   endOfDay,
   subDays,
   startOfWeek,
@@ -63,8 +64,32 @@ import {
 import { supabase } from "@/lib/supabase";
 
 export function OverviewSection() {
+  const { data: currentSession, isLoading: isLoadingSession } = useQuery({
+    queryKey: ["admin_current_session"],
+    queryFn: async () => {
+      if (!supabase) return null;
+      const { data, error } = await supabase
+        .from("key_sessions")
+        .select(
+          "*, holder:profiles!current_holder(id, full_name, role, email), bookings(id, start_time, duration_hours, user_id, booker:profiles!user_id(id, full_name), team_size)",
+        )
+        .eq("status", "active")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        console.error(error);
+        return null;
+      }
+      return data || null;
+    },
+    refetchInterval: 10000,
+  });
+
   const { data: usersCount, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["admin_users_count"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!supabase) return 0;
       const { count, error } = await supabase
@@ -78,6 +103,7 @@ export function OverviewSection() {
 
   const { data: execomCount, isLoading: isLoadingExecom } = useQuery({
     queryKey: ["admin_execom_count"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!supabase) return 0;
       const { count, error } = await supabase
@@ -91,6 +117,7 @@ export function OverviewSection() {
 
   const { data: bookingsStats, isLoading: isLoadingBookings } = useQuery({
     queryKey: ["admin_bookings_stats"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!supabase) return null;
       const { data, error } = await supabase.from("bookings").select("status");
@@ -108,6 +135,60 @@ export function OverviewSection() {
 
   return (
     <div className="space-y-6">
+      <Card
+        className="panel border-primary/20 bg-background/50 fade-up"
+        style={{ animationDelay: "0ms" }}
+      >
+        <CardHeader>
+          <CardTitle>Current Ongoing Session</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingSession ? (
+            <div className="animate-pulse text-sm text-muted-foreground">
+              Loading session state...
+            </div>
+          ) : currentSession ? (
+            <div className="space-y-2">
+              <Badge className="bg-green-600 hover:bg-green-600 text-white">Session Active</Badge>
+              <div className="text-sm mt-3 space-y-1">
+                <p>
+                  <span className="font-semibold text-muted-foreground">Source:</span>{" "}
+                  {currentSession.bookings ? "Booking Session" : "Fingerprint Access Session"}
+                </p>
+                <p>
+                  <span className="font-semibold text-muted-foreground">Member:</span>{" "}
+                  {(currentSession.holder as any)?.full_name ||
+                    (currentSession.holder as any)?.email}
+                </p>
+                <p>
+                  <span className="font-semibold text-muted-foreground">Started:</span>{" "}
+                  {format(new Date(currentSession.started_at), "PPp")}
+                </p>
+                {currentSession.bookings && (
+                  <>
+                    <p>
+                      <span className="font-semibold text-muted-foreground">Expected End:</span>{" "}
+                      {format(
+                        addHours(
+                          new Date((currentSession.bookings as any).start_time),
+                          (currentSession.bookings as any).duration_hours,
+                        ),
+                        "PPp",
+                      )}
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="text-destructive font-semibold">No active sessions</p>
+              <p className="text-sm text-muted-foreground mt-1">No sessions currently</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-4">
         <Card className="panel bg-card/40 fade-up" style={{ animationDelay: "0ms" }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -224,6 +305,7 @@ export function BookingsSection() {
     isRefetching,
   } = useQuery({
     queryKey: ["admin_bookings"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -586,6 +668,7 @@ export function LogsSection() {
     isRefetching,
   } = useQuery({
     queryKey: ["admin_audit_logs"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase

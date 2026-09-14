@@ -46,11 +46,12 @@ function MemberDashboard() {
 
   if (loading || checking) {
     return (
-      <AppShell>
-        <div className="flex h-[50vh] items-center justify-center text-muted-foreground">
-          <div className="animate-pulse">Loading dashboard...</div>
+      <div className="flex min-h-screen bg-background items-center justify-center flex-col gap-4">
+        <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-muted-foreground font-display tracking-wider animate-pulse">
+          Loading C-ROB Smart Key Locker...
         </div>
-      </AppShell>
+      </div>
     );
   }
 

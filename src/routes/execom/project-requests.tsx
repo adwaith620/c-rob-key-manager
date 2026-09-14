@@ -28,39 +28,56 @@ function ProjectRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<ProjectRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
-  
+
   // New Request Form State
   const [teamSizeInput, setTeamSizeInput] = useState("");
 
-  const filteredRequests = requests.filter(req => 
-    req.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    req.applicant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    req.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRequests = requests.filter(
+    (req) =>
+      req.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.applicant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.id.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleApprove = () => {
     if (!selectedRequest) return;
-    setRequests(requests.map(r => r.id === selectedRequest.id ? { ...r, status: "Approved" } : r));
+    setRequests(
+      requests.map((r) => (r.id === selectedRequest.id ? { ...r, status: "Approved" } : r)),
+    );
     setSelectedRequest({ ...selectedRequest, status: "Approved" });
   };
 
   const handleReject = () => {
     if (!selectedRequest) return;
     if (confirm("Are you sure you want to reject this request?")) {
-      setRequests(requests.map(r => r.id === selectedRequest.id ? { ...r, status: "Rejected" } : r));
+      setRequests(
+        requests.map((r) => (r.id === selectedRequest.id ? { ...r, status: "Rejected" } : r)),
+      );
       setSelectedRequest({ ...selectedRequest, status: "Rejected" });
     }
   };
 
   const handleIssueKey = () => {
     if (!selectedRequest) return;
-    setRequests(requests.map(r => r.id === selectedRequest.id ? { ...r, status: "Active", assignedKey: r.requestedKey } : r));
-    setSelectedRequest({ ...selectedRequest, status: "Active", assignedKey: r.requestedKey });
+    setRequests(
+      requests.map((r) =>
+        r.id === selectedRequest.id
+          ? { ...r, status: "Active", assignedKey: selectedRequest.requestedKey }
+          : r,
+      ),
+    );
+    setSelectedRequest({
+      ...selectedRequest,
+      status: "Active",
+      assignedKey: selectedRequest.requestedKey,
+    });
   };
 
   const handleReturn = () => {
     if (!selectedRequest) return;
-    setRequests(requests.map(r => r.id === selectedRequest.id ? { ...r, status: "Completed" } : r));
+    setRequests(
+      requests.map((r) => (r.id === selectedRequest.id ? { ...r, status: "Completed" } : r)),
+    );
     setSelectedRequest({ ...selectedRequest, status: "Completed" });
   };
 
@@ -102,17 +119,19 @@ function ProjectRequestsPage() {
                   <Label htmlFor="teamSize" className="font-semibold text-primary">
                     Tell us how many members are working in this project including you
                   </Label>
-                  <Input 
-                    id="teamSize" 
-                    type="number" 
-                    min="1" 
+                  <Input
+                    id="teamSize"
+                    type="number"
+                    min="1"
                     max="30"
                     value={teamSizeInput}
                     onChange={handleTeamSizeChange}
                     className="w-32"
                     placeholder="Max 30"
                   />
-                  <p className="text-xs text-muted-foreground">You are automatically included in this total.</p>
+                  <p className="text-xs text-muted-foreground">
+                    You are automatically included in this total.
+                  </p>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="purpose">Purpose of Visit (Optional)</Label>
@@ -120,7 +139,9 @@ function ProjectRequestsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsNewRequestOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsNewRequestOpen(false)}>
+                  Cancel
+                </Button>
                 <Button onClick={() => setIsNewRequestOpen(false)}>Submit Request</Button>
               </DialogFooter>
             </DialogContent>
@@ -131,8 +152,8 @@ function ProjectRequestsPage() {
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search requests..." 
+          <Input
+            placeholder="Search requests..."
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -167,7 +188,10 @@ function ProjectRequestsPage() {
                     <td className="px-6 py-4 font-medium">{req.id}</td>
                     <td className="px-6 py-4">{req.projectName}</td>
                     <td className="px-6 py-4">
-                      {req.applicant} <span className="text-xs text-muted-foreground ml-1">({req.teamSize} members)</span>
+                      {req.applicant}{" "}
+                      <span className="text-xs text-muted-foreground ml-1">
+                        ({req.teamSize} members)
+                      </span>
                     </td>
                     <td className="px-6 py-4">{req.requestedKey}</td>
                     <td className="px-6 py-4">{new Date(req.requestDate).toLocaleDateString()}</td>
@@ -175,8 +199,8 @@ function ProjectRequestsPage() {
                       <StatusBadge status={req.status} />
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button 
-                        variant="secondary" 
+                      <Button
+                        variant="secondary"
                         size="sm"
                         onClick={() => {
                           setSelectedRequest(req);
@@ -204,53 +228,65 @@ function ProjectRequestsPage() {
                   <DialogTitle className="text-xl">{selectedRequest.projectName}</DialogTitle>
                   <StatusBadge status={selectedRequest.status} />
                 </div>
-                <DialogDescription>
-                  Request ID: {selectedRequest.id}
-                </DialogDescription>
+                <DialogDescription>Request ID: {selectedRequest.id}</DialogDescription>
               </DialogHeader>
-              
+
               <div className="grid gap-6 py-4">
                 {/* Project Info */}
                 <div>
-                  <h3 className="font-semibold text-sm text-primary mb-3 uppercase tracking-wider">Project Information</h3>
+                  <h3 className="font-semibold text-sm text-primary mb-3 uppercase tracking-wider">
+                    Project Information
+                  </h3>
                   <div className="grid grid-cols-2 gap-y-3 text-sm">
                     <div className="text-muted-foreground">Applicant Name</div>
                     <div className="font-medium">{selectedRequest.applicant}</div>
-                    
+
                     <div className="text-muted-foreground">Team Size</div>
                     <div className="font-medium">{selectedRequest.teamSize} members</div>
-                    
+
                     <div className="text-muted-foreground">Team Members</div>
                     <div className="font-medium">{selectedRequest.teamMembers.join(", ")}</div>
-                    
+
                     <div className="text-muted-foreground">Purpose of Visit</div>
                     <div className="font-medium italic">
-                      {selectedRequest.purposeOfVisit ? `"${selectedRequest.purposeOfVisit}"` : "Not provided"}
+                      {selectedRequest.purposeOfVisit
+                        ? `"${selectedRequest.purposeOfVisit}"`
+                        : "Not provided"}
                     </div>
                   </div>
                 </div>
 
                 {/* Key Info */}
                 <div className="border-t border-border/50 pt-4">
-                  <h3 className="font-semibold text-sm text-primary mb-3 uppercase tracking-wider">Key Information</h3>
+                  <h3 className="font-semibold text-sm text-primary mb-3 uppercase tracking-wider">
+                    Key Information
+                  </h3>
                   <div className="grid grid-cols-2 gap-y-3 text-sm">
                     <div className="text-muted-foreground">Requested Key</div>
                     <div className="font-medium">{selectedRequest.requestedKey}</div>
-                    
+
                     <div className="text-muted-foreground">Assigned Key</div>
-                    <div className="font-medium">{selectedRequest.assignedKey || "Not assigned yet"}</div>
+                    <div className="font-medium">
+                      {selectedRequest.assignedKey || "Not assigned yet"}
+                    </div>
                   </div>
                 </div>
 
                 {/* Request Info */}
                 <div className="border-t border-border/50 pt-4">
-                  <h3 className="font-semibold text-sm text-primary mb-3 uppercase tracking-wider">Request Information</h3>
+                  <h3 className="font-semibold text-sm text-primary mb-3 uppercase tracking-wider">
+                    Request Information
+                  </h3>
                   <div className="grid grid-cols-2 gap-y-3 text-sm">
                     <div className="text-muted-foreground">Request Date</div>
-                    <div className="font-medium">{new Date(selectedRequest.requestDate).toLocaleString()}</div>
-                    
+                    <div className="font-medium">
+                      {new Date(selectedRequest.requestDate).toLocaleString()}
+                    </div>
+
                     <div className="text-muted-foreground">Expected Duration</div>
-                    <div className="font-medium">{selectedRequest.requestedDurationHours} Hours</div>
+                    <div className="font-medium">
+                      {selectedRequest.requestedDurationHours} Hours
+                    </div>
                   </div>
                 </div>
               </div>
@@ -261,7 +297,11 @@ function ProjectRequestsPage() {
                     <Button variant="destructive" onClick={handleReject} className="gap-2">
                       <X className="size-4" /> Reject
                     </Button>
-                    <Button variant="default" onClick={handleApprove} className="gap-2 bg-success hover:bg-success/90 text-success-foreground">
+                    <Button
+                      variant="default"
+                      onClick={handleApprove}
+                      className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
+                    >
                       <Check className="size-4" /> Approve
                     </Button>
                   </>
@@ -272,7 +312,11 @@ function ProjectRequestsPage() {
                   </Button>
                 )}
                 {selectedRequest.status === "Active" && (
-                  <Button variant="default" onClick={handleReturn} className="gap-2 bg-info hover:bg-info/90 text-info-foreground">
+                  <Button
+                    variant="default"
+                    onClick={handleReturn}
+                    className="gap-2 bg-info hover:bg-info/90 text-info-foreground"
+                  >
                     <Check className="size-4" /> Mark as Returned
                   </Button>
                 )}

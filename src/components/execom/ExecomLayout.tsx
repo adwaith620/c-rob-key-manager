@@ -65,7 +65,7 @@ export function ExecomLayout() {
           {NAV.map(({ to, label, icon: Icon }) => {
             const active = pathname === to || (to !== "/execom" && pathname.startsWith(to));
             return (
-               <Link
+              <Link
                 key={to}
                 to={to}
                 className={cn(

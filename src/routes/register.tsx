@@ -44,10 +44,13 @@ function RegisterPage() {
     }
     setBusy(true);
 
+    // Dynamically use the current origin for local development vs production Vercel
+    const redirectUrl = `${window.location.origin}/member`;
+
     const { error: signInError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/member",
+        redirectTo: redirectUrl,
         queryParams: {
           access_type: "offline",
           prompt: "consent",

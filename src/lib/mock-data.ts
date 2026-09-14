@@ -1,11 +1,5 @@
 export type KeyStatus =
-  | "Available"
-  | "In Use"
-  | "Reserved"
-  | "Pending Return"
-  | "Overdue"
-  | "Maintenance"
-  | "Disabled";
+  "Available" | "In Use" | "Reserved" | "Pending Return" | "Overdue" | "Maintenance" | "Disabled";
 
 export type RequestStatus = "Pending" | "Approved" | "Rejected" | "Completed" | "Active";
 export type ProjectStatus = "Active" | "Pending Return" | "Overdue" | "Completed";

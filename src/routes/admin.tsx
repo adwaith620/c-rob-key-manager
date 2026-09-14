@@ -47,10 +47,19 @@ const TABS = [
 ];
 
 function AdminDashboard() {
-  const { user, role, loading, signOut } = useAuth();
+  const { user, profile, role, loading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-background items-center justify-center flex-col gap-4">
+        <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-muted-foreground font-display tracking-wider animate-pulse">
+          Loading C-ROB Smart Key Locker...
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -101,8 +110,13 @@ function AdminDashboard() {
                   <ShieldAlert className="size-4 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">Admin Account</p>
+                  <p className="text-sm font-medium truncate">
+                    {profile?.full_name || "Admin Member"}
+                  </p>
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  <p className="text-[10px] uppercase font-bold text-primary tracking-wider mt-0.5">
+                    Admin Account
+                  </p>
                 </div>
               </div>
               <Button

@@ -25,6 +25,7 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // loading indicates if the initial session AND profile fetch are still in progress
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -35,36 +36,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const client = supabase;
+    let mounted = true;
 
-    const { data: sub } = client.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-      if (!next) setProfile(null);
+    async function initializeAuth() {
+      // 1. Get the current session
+      const {
+        data: { session: initialSession },
+      } = await client.auth.getSession();
+
+      if (!mounted) return;
+      setSession(initialSession);
+
+      // 2. If a session exists, explicitly fetch the profile before ending the loading state
+      if (initialSession?.user?.id) {
+        const { data: profileData } = await client
+          .from("profiles")
+          .select("id, full_name, phone, role")
+          .eq("id", initialSession.user.id)
+          .maybeSingle();
+
+        if (!mounted) return;
+        setProfile((profileData as Profile | null) ?? null);
+      } else {
+        if (mounted) setProfile(null);
+      }
+
+      if (mounted) setLoading(false);
+    }
+
+    initializeAuth();
+
+    // Listen for ongoing auth state changes
+    const { data: sub } = client.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!mounted) return;
+
+      // If session user changes
+      setSession(nextSession);
+      if (nextSession?.user?.id) {
+        // Fetch profile silently in the background
+        const { data: profileData } = await client
+          .from("profiles")
+          .select("id, full_name, phone, role")
+          .eq("id", nextSession.user.id)
+          .maybeSingle();
+
+        if (mounted) setProfile((profileData as Profile | null) ?? null);
+      } else {
+        if (mounted) setProfile(null);
+      }
     });
 
-    client.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const userId = session?.user?.id;
-    if (!supabase || !userId) return;
-    let cancelled = false;
-    supabase
-      .from("profiles")
-      .select("id, full_name, phone, role")
-      .eq("id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) setProfile((data as Profile | null) ?? null);
-      });
     return () => {
-      cancelled = true;
+      mounted = false;
+      sub.subscription.unsubscribe();
     };
-  }, [session?.user?.id]);
+  }, []);
 
   const value = useMemo<AuthState>(
     () => ({

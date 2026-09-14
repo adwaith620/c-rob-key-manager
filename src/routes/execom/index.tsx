@@ -1,12 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { 
-  KeyRound, 
-  CheckCircle, 
-  Clock, 
-  Briefcase, 
-  AlertTriangle,
-  FileText
-} from "lucide-react";
+import { KeyRound, CheckCircle, Clock, Briefcase, AlertTriangle, FileText } from "lucide-react";
 import { ExecomPageHeading } from "@/components/execom/ExecomLayout";
 import { StatCard } from "@/components/execom/StatCard";
 import { StatusBadge } from "@/components/execom/StatusBadge";
@@ -20,8 +13,8 @@ export const Route = createFileRoute("/execom/")({
 
 function DashboardHome() {
   const stats = getDashboardStats();
-  const recentRequests = mockRequests.filter(r => r.status === "Pending").slice(0, 3);
-  const overdueKeys = mockKeys.filter(k => k.status === "Overdue").slice(0, 3);
+  const recentRequests = mockRequests.filter((r) => r.status === "Pending").slice(0, 3);
+  const overdueKeys = mockKeys.filter((k) => k.status === "Overdue").slice(0, 3);
 
   return (
     <>
@@ -87,8 +80,11 @@ function DashboardHome() {
               </div>
             ) : (
               <div className="space-y-4">
-                {recentRequests.map(req => (
-                  <div key={req.id} className="flex flex-col sm:flex-row justify-between p-3 border border-border/50 rounded-lg bg-background/50">
+                {recentRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="flex flex-col sm:flex-row justify-between p-3 border border-border/50 rounded-lg bg-background/50"
+                  >
                     <div>
                       <div className="font-medium">{req.projectName}</div>
                       <div className="text-xs text-muted-foreground">
@@ -116,20 +112,22 @@ function DashboardHome() {
           </CardHeader>
           <CardContent className="relative z-10">
             {overdueKeys.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-4 text-center">
-                No overdue keys
-              </div>
+              <div className="text-sm text-muted-foreground py-4 text-center">No overdue keys</div>
             ) : (
               <div className="space-y-4">
-                {overdueKeys.map(key => (
-                  <div key={key.id} className="flex flex-col sm:flex-row justify-between p-3 border border-destructive/20 rounded-lg bg-background/50 backdrop-blur-sm shadow-sm">
+                {overdueKeys.map((key) => (
+                  <div
+                    key={key.id}
+                    className="flex flex-col sm:flex-row justify-between p-3 border border-destructive/20 rounded-lg bg-background/50 backdrop-blur-sm shadow-sm"
+                  >
                     <div>
                       <div className="font-medium text-destructive">{key.number}</div>
                       <div className="text-xs text-muted-foreground">
                         Project: {key.assignedProject} • {key.responsibleMember}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-destructive mt-1 font-semibold">
-                        <Clock className="size-3" /> Expected: {new Date(key.expectedReturnDate!).toLocaleString()}
+                        <Clock className="size-3" /> Expected:{" "}
+                        {new Date(key.expectedReturnDate!).toLocaleString()}
                       </div>
                     </div>
                     <div className="mt-2 sm:mt-0 flex items-center">

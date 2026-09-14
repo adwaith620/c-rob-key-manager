@@ -15,9 +15,10 @@ export const Route = createFileRoute("/execom/members")({
 function MembersPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredMembers = mockMembers.filter(m => 
-    m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.project.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredMembers = mockMembers.filter(
+    (m) =>
+      m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.project.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -30,8 +31,8 @@ function MembersPage() {
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search members by name or project..." 
+          <Input
+            placeholder="Search members by name or project..."
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -49,7 +50,10 @@ function MembersPage() {
           </div>
         ) : (
           filteredMembers.map((member) => (
-            <Card key={member.id} className="panel hover:border-primary/50 transition-colors cursor-pointer group">
+            <Card
+              key={member.id}
+              className="panel hover:border-primary/50 transition-colors cursor-pointer group"
+            >
               <div className="p-5">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
@@ -63,7 +67,7 @@ function MembersPage() {
                   </div>
                   <StatusBadge status={member.status} />
                 </div>
-                
+
                 <div className="space-y-2 text-sm mt-4">
                   <div className="flex justify-between border-b border-border/50 pb-2">
                     <span className="text-muted-foreground">Current Project</span>
