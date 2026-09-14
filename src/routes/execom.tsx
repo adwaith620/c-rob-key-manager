@@ -4,6 +4,7 @@ import { ShieldCheck, ArrowRightLeft, User, Clock } from "lucide-react";
 import { formatDistanceToNow, isAfter, addHours } from "date-fns";
 
 import { AppShell, PageHeading } from "@/components/AppShell";
+import { AnimatedSection } from "@/components/crob/AnimatedSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GlobalKeyStatus } from "@/components/GlobalKeyStatus";
