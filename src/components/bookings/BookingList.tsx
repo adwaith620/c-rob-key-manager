@@ -166,9 +166,7 @@ export function BookingList() {
           ) : (
             <div className="flex flex-col">
               <div
-                className={`space-y-3 ${
-                  showAllPast ? "max-h-[300px] overflow-y-auto pr-2" : ""
-                }`}
+                className={`space-y-3 ${showAllPast ? "max-h-[300px] overflow-y-auto pr-2" : ""}`}
               >
                 {(showAllPast ? past : past.slice(0, 2)).map((booking) => (
                   <div

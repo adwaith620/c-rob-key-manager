@@ -355,3 +355,14 @@ export function LogsSection() {
     </Card>
   );
 }
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
+
+export * from "./UsersSection";

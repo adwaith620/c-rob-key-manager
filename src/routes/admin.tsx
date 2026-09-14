@@ -20,7 +20,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 
-import { OverviewSection, BookingsSection, LogsSection } from "@/components/admin/AdminComponents";
+import {
+  OverviewSection,
+  BookingsSection,
+  LogsSection,
+  UsersSection,
+} from "@/components/admin/AdminComponents";
 
 export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
@@ -108,11 +113,10 @@ function AdminDashboard() {
         <main className="flex-1 min-w-0">
           {activeTab === "overview" && <OverviewSection />}
           {activeTab === "bookings" && <BookingsSection />}
+          {activeTab === "members" && <UsersSection />}
           {activeTab === "logs" && <LogsSection />}
 
-          {"AlDo this is where Members / Execom / Lockers / Fingerprint will be"}
-
-          {["lockers", "keys", "members", "execom", "fingerprints"].includes(activeTab) && (
+          {["lockers", "keys", "execom", "fingerprints"].includes(activeTab) && (
             <Card className="panel border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="rounded-full bg-muted/20 p-4 mb-4">

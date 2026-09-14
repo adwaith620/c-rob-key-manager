@@ -1,13 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  CalendarClock,
-  Loader2,
-  Calendar as CalendarIcon,
-  Clock,
-  Users,
-  User,
-} from "lucide-react";
+import { CalendarClock, Loader2, Calendar as CalendarIcon, Clock, Users, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -63,11 +56,7 @@ const formSchema = z
       })
       .min(1, "Time is required"),
     durationHours: z.string().min(1, "Duration is required"),
-    purpose: z
-      .string()
-      .max(1000, "Purpose is too long")
-      .trim()
-      .optional(),
+    purpose: z.string().max(1000, "Purpose is too long").trim().optional(),
     additionalPeople: z.string().optional(),
   })
   .refine(
@@ -336,7 +325,8 @@ export function BookingForm() {
           status: "pending",
           booking_type: values.bookingType,
           purpose_of_visit: values.purpose?.trim() || null,
-          additional_people: values.bookingType === "team" ? parseInt(values.additionalPeople || "0", 10) : 0,
+          additional_people:
+            values.bookingType === "team" ? parseInt(values.additionalPeople || "0", 10) : 0,
         })
         .select()
         .single();
@@ -352,7 +342,8 @@ export function BookingForm() {
         user_id: user.id,
         booking_type: values.bookingType,
         purpose_of_visit: values.purpose?.trim() || null,
-        additional_people: values.bookingType === "team" ? parseInt(values.additionalPeople || "0", 10) : 0,
+        additional_people:
+          values.bookingType === "team" ? parseInt(values.additionalPeople || "0", 10) : 0,
       });
 
       if (logError) {
