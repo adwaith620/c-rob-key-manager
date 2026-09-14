@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Loader2, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { CalendarClock, Loader2, Calendar as CalendarIcon, Clock, User, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -292,7 +292,7 @@ export function BookingForm() {
     defaultValues: {
       time: "",
       durationHours: "1",
-      bookingType: "individual",
+      bookingType: undefined as unknown as "individual",
       purpose: "",
     },
   });
@@ -401,153 +401,229 @@ export function BookingForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
-                    <DatePickerPopover value={field.value} onChange={field.onChange} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Time</FormLabel>
-                    <TimePickerPopover value={field.value} onChange={field.onChange} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid gap-4">
-              <FormField
-                control={form.control}
-                name="durationHours"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Duration</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select duration" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5].map((hour) => (
-                          <SelectItem key={hour} value={hour.toString()}>
-                            {hour} hour{hour > 1 ? "s" : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="bookingType"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Booking Type</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex gap-4"
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="bookingType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel className="text-base text-foreground/90 font-medium">
+                    Booking Type
+                  </FormLabel>
+                  <FormControl>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => field.onChange("individual")}
+                        className={cn(
+                          "flex flex-col items-start gap-2.5 p-4 rounded-xl border transition-all duration-200 text-left relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          field.value === "individual"
+                            ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.15)]"
+                            : "border-border/50 bg-card/20 hover:bg-card/40 hover:border-primary/50",
+                        )}
+                        aria-pressed={field.value === "individual"}
                       >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="individual" />
-                          </FormControl>
-                          <FormLabel className="font-normal cursor-pointer">Individual</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="team" />
-                          </FormControl>
-                          <FormLabel className="font-normal cursor-pointer">Team</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {form.watch("bookingType") === "team" && (
-                <FormField
-                  control={form.control}
-                  name="teamSize"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        How many members are working in this project including you?
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="2"
-                          max="30"
-                          step="1"
-                          placeholder="e.g. 3"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.valueAsNumber || e.target.value)}
+                        {field.value === "individual" && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        )}
+                        <User
+                          className={cn(
+                            "size-5",
+                            field.value === "individual" ? "text-primary" : "text-muted-foreground",
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                        <div>
+                          <div
+                            className={cn(
+                              "font-medium",
+                              field.value === "individual" ? "text-primary" : "text-foreground",
+                            )}
+                          >
+                            Individual
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Book the locker for yourself
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => field.onChange("team")}
+                        className={cn(
+                          "flex flex-col items-start gap-2.5 p-4 rounded-xl border transition-all duration-200 text-left relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          field.value === "team"
+                            ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.15)]"
+                            : "border-border/50 bg-card/20 hover:bg-card/40 hover:border-primary/50",
+                        )}
+                        aria-pressed={field.value === "team"}
+                      >
+                        {field.value === "team" && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        )}
+                        <Users
+                          className={cn(
+                            "size-5",
+                            field.value === "team" ? "text-primary" : "text-muted-foreground",
+                          )}
+                        />
+                        <div>
+                          <div
+                            className={cn(
+                              "font-medium",
+                              field.value === "team" ? "text-primary" : "text-foreground",
+                            )}
+                          >
+                            Team
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Book the locker for a project team
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {form.watch("bookingType") && (
+              <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 fill-mode-forwards">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date</FormLabel>
+                        <DatePickerPopover value={field.value} onChange={field.onChange} />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Time</FormLabel>
+                        <TimePickerPopover value={field.value} onChange={field.onChange} />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="durationHours"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Duration</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Select duration" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5].map((hour) => (
+                              <SelectItem key={hour} value={hour.toString()}>
+                                {hour} hour{hour > 1 ? "s" : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="purpose"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Purpose of Visit{" "}
+                          <span className="text-muted-foreground text-xs font-normal">
+                            (Optional)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Briefly describe what you'll be working on..."
+                            className="resize-none h-20 bg-background"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch("bookingType") === "team" && (
+                    <FormField
+                      control={form.control}
+                      name="teamSize"
+                      render={({ field }) => (
+                        <FormItem className="rounded-xl border border-border/50 bg-card/20 p-4 space-y-3 mt-2">
+                          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <Users className="size-4 text-primary" /> Team Members
+                          </div>
+                          <FormLabel className="text-sm text-muted-foreground font-normal leading-relaxed block">
+                            How many people are there in your team including you
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="2"
+                              max="30"
+                              step="1"
+                              placeholder="e.g. 2"
+                              className="w-full sm:w-32 bg-background"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(e.target.valueAsNumber || e.target.value)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
-              )}
+                </div>
 
-              <FormField
-                control={form.control}
-                name="purpose"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      What is the purpose of booking?{" "}
-                      <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Briefly describe what you'll be working on..."
-                        className="resize-none h-20"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-1 text-sm border-t border-border/20 mt-2 gap-2">
+                  <span className="text-muted-foreground">Summary:</span>
+                  <span className="font-semibold text-foreground">
+                    {form.watch("bookingType") === "individual"
+                      ? "1 person · Individual booking"
+                      : `${form.watch("teamSize") && !isNaN(form.watch("teamSize") as number) ? form.watch("teamSize") : 2} people · Team booking`}
+                  </span>
+                </div>
 
-            <Button
-              type="submit"
-              variant="crobPrimary"
-              glow
-              className="w-full"
-              disabled={isPending}
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" /> Submitting...
-                </>
-              ) : (
-                "Request Booking"
-              )}
-            </Button>
+                <Button
+                  type="submit"
+                  variant="crobPrimary"
+                  glow
+                  className="w-full"
+                  disabled={isPending}
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" /> Submitting...
+                    </>
+                  ) : (
+                    "Request Booking"
+                  )}
+                </Button>
+              </div>
+            )}
           </form>
         </Form>
       </CardContent>
