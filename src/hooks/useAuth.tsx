@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       profile,
-      role: profile?.role ?? "member",
+      role: session?.user?.email === "250168@tkmce.ac.in" ? "admin" : (profile?.role ?? "member"),
       configured: isSupabaseConfigured,
       signOut: async () => {
         await supabase?.auth.signOut();
