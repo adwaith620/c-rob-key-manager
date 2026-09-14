@@ -406,12 +406,12 @@ export function BookingForm() {
               control={form.control}
               name="bookingType"
               render={({ field }) => (
-                <FormItem className="space-y-5">
-                  <FormLabel className="text-base text-foreground/90 font-medium">
+                <FormItem className="space-y-0 flex flex-col">
+                  <FormLabel className="text-base text-foreground/90 font-medium block mb-5">
                     Booking Type
                   </FormLabel>
                   <FormControl>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <button
                         type="button"
                         onClick={() => field.onChange("individual")}
@@ -546,8 +546,8 @@ export function BookingForm() {
                     control={form.control}
                     name="purpose"
                     render={({ field }) => (
-                      <FormItem className="space-y-4">
-                        <FormLabel>
+                      <FormItem className="space-y-0 flex flex-col">
+                        <FormLabel className="block mb-4">
                           Purpose of Visit{" "}
                           <span className="text-muted-foreground text-xs font-normal">
                             (Optional)
