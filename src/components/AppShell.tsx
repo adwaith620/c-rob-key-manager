@@ -34,47 +34,49 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen">
       {/* ── Sidebar ── */}
       <aside
-        className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border md:flex sticky top-0 h-screen overflow-y-auto"
+        className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border md:flex"
         style={{
           backgroundImage:
             "linear-gradient(180deg, oklch(0.19 0.025 265) 0%, oklch(0.16 0.02 265) 100%)",
         }}
       >
-        <div className="p-5">
-          <Link to="/">
-            <CrobLogo size="sm" />
-          </Link>
-        </div>
+        <div className="sticky top-0 flex h-screen flex-col overflow-y-auto">
+          <div className="p-5">
+            <Link to="/">
+              <CrobLogo size="sm" />
+            </Link>
+          </div>
 
-        <nav className="mt-3 space-y-1 px-3">
-          {links.map(({ to, label, icon: Icon }) => {
-            const active = pathname === to;
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={cn(
-                  "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "border-l-2 border-primary bg-primary/15 text-primary"
-                    : "border-l-2 border-transparent text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
+          <nav className="mt-3 space-y-1 px-3">
+            {links.map(({ to, label, icon: Icon }) => {
+              const active = pathname === to;
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  className={cn(
+                    "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "border-l-2 border-primary bg-primary/15 text-primary"
+                      : "border-l-2 border-transparent text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* User profile card */}
-        <div className="mt-auto p-4">
-          <div className="rounded-lg border border-sidebar-border bg-card/60 p-3 glow-subtle">
-            <p className="truncate text-sm font-medium">{profile?.full_name ?? "C-ROB user"}</p>
-            <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-            <Badge variant="secondary" className="mt-2">
-              {roleLabel[role]}
-            </Badge>
+          {/* User profile card */}
+          <div className="mt-auto p-4">
+            <div className="rounded-lg border border-sidebar-border bg-card/60 p-3 glow-subtle">
+              <p className="truncate text-sm font-medium">{profile?.full_name ?? "C-ROB user"}</p>
+              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+              <Badge variant="secondary" className="mt-2">
+                {roleLabel[role]}
+              </Badge>
+            </div>
           </div>
         </div>
       </aside>
