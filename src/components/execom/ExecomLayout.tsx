@@ -7,7 +7,6 @@ import {
   Users,
   History,
   BarChart,
-  Settings,
   LogOut,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -27,7 +26,6 @@ const NAV = [
   { to: "/execom/members", label: "Members", icon: Users },
   { to: "/execom/history", label: "Activity / History", icon: History },
   { to: "/execom/reports", label: "Reports", icon: BarChart },
-  { to: "/execom/settings", label: "Settings", icon: Settings },
 ];
 
 export function ExecomLayout() {

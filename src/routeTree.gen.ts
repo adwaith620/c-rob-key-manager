@@ -26,7 +26,6 @@ import { Route as ExecomHistoryRouteImport } from './routes/execom/history'
 import { Route as ExecomMembersRouteImport } from './routes/execom/members'
 import { Route as ExecomProjectRequestsRouteImport } from './routes/execom/project-requests'
 import { Route as ExecomReportsRouteImport } from './routes/execom/reports'
-import { Route as ExecomSettingsRouteImport } from './routes/execom/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -113,11 +112,6 @@ const ExecomReportsRoute = ExecomReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => ExecomRoute,
 } as any)
-const ExecomSettingsRoute = ExecomSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => ExecomRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -136,7 +130,6 @@ export interface FileRoutesByFullPath {
   '/execom/members': typeof ExecomMembersRoute
   '/execom/project-requests': typeof ExecomProjectRequestsRoute
   '/execom/reports': typeof ExecomReportsRoute
-  '/execom/settings': typeof ExecomSettingsRoute
   '/execom/': typeof ExecomIndexRoute
 }
 export interface FileRoutesByTo {
@@ -155,7 +148,6 @@ export interface FileRoutesByTo {
   '/execom/members': typeof ExecomMembersRoute
   '/execom/project-requests': typeof ExecomProjectRequestsRoute
   '/execom/reports': typeof ExecomReportsRoute
-  '/execom/settings': typeof ExecomSettingsRoute
   '/execom': typeof ExecomIndexRoute
 }
 export interface FileRoutesById {
@@ -176,7 +168,6 @@ export interface FileRoutesById {
   '/execom/members': typeof ExecomMembersRoute
   '/execom/project-requests': typeof ExecomProjectRequestsRoute
   '/execom/reports': typeof ExecomReportsRoute
-  '/execom/settings': typeof ExecomSettingsRoute
   '/execom/': typeof ExecomIndexRoute
 }
 export interface FileRouteTypes {
@@ -198,7 +189,6 @@ export interface FileRouteTypes {
     | '/execom/members'
     | '/execom/project-requests'
     | '/execom/reports'
-    | '/execom/settings'
     | '/execom/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -217,7 +207,6 @@ export interface FileRouteTypes {
     | '/execom/members'
     | '/execom/project-requests'
     | '/execom/reports'
-    | '/execom/settings'
     | '/execom'
   id:
     | '__root__'
@@ -237,7 +226,6 @@ export interface FileRouteTypes {
     | '/execom/members'
     | '/execom/project-requests'
     | '/execom/reports'
-    | '/execom/settings'
     | '/execom/'
   fileRoutesById: FileRoutesById
 }
@@ -376,13 +364,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExecomReportsRouteImport
       parentRoute: typeof ExecomRoute
     }
-    '/execom/settings': {
-      id: '/execom/settings'
-      path: '/settings'
-      fullPath: '/execom/settings'
-      preLoaderRoute: typeof ExecomSettingsRouteImport
-      parentRoute: typeof ExecomRoute
-    }
   }
 }
 
@@ -392,7 +373,6 @@ interface ExecomRouteChildren {
   ExecomMembersRoute: typeof ExecomMembersRoute
   ExecomProjectRequestsRoute: typeof ExecomProjectRequestsRoute
   ExecomReportsRoute: typeof ExecomReportsRoute
-  ExecomSettingsRoute: typeof ExecomSettingsRoute
   ExecomIndexRoute: typeof ExecomIndexRoute
 }
 
@@ -402,7 +382,6 @@ const ExecomRouteChildren: ExecomRouteChildren = {
   ExecomMembersRoute: ExecomMembersRoute,
   ExecomProjectRequestsRoute: ExecomProjectRequestsRoute,
   ExecomReportsRoute: ExecomReportsRoute,
-  ExecomSettingsRoute: ExecomSettingsRoute,
   ExecomIndexRoute: ExecomIndexRoute,
 }
 
