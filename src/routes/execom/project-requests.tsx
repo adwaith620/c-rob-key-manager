@@ -142,8 +142,8 @@ function ProjectRequestsPage() {
                 </tr>
               ) : (
                 filteredRequests.map((req) => (
-                  <tr 
-                    key={req.id} 
+                  <tr
+                    key={req.id}
                     className="hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() => {
                       setSelectedRequest(req);

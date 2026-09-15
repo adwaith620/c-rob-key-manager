@@ -38,7 +38,7 @@ const TABS = [
   { id: "bookings", label: "Booking Requests", icon: Calendar },
   { id: "members", label: "Member List", icon: Users },
   { id: "execom", label: "ExeCom Members", icon: ShieldCheck },
-  { id: "logs", label: "Logs", icon: FileText },
+  { id: "logs", label: "Member Logs", icon: FileText },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 

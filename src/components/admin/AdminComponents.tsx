@@ -516,7 +516,8 @@ export function BookingsSection() {
                                   onClick={() => handleAction(b, "confirmed")}
                                   disabled={isProcessing}
                                 >
-                                  {isProcessing && updateBooking.variables?.status === "confirmed" ? (
+                                  {isProcessing &&
+                                  updateBooking.variables?.status === "confirmed" ? (
                                     <RefreshCw className="mr-1 size-3 animate-spin" />
                                   ) : (
                                     <CheckCircle className="mr-1 size-3" />
@@ -536,7 +537,8 @@ export function BookingsSection() {
                                   }
                                   disabled={isProcessing}
                                 >
-                                  {isProcessing && updateBooking.variables?.status === "cancelled" ? (
+                                  {isProcessing &&
+                                  updateBooking.variables?.status === "cancelled" ? (
                                     <RefreshCw className="mr-1 size-3 animate-spin" />
                                   ) : (
                                     <XCircle className="mr-1 size-3" />
@@ -557,7 +559,8 @@ export function BookingsSection() {
                                   }
                                   disabled={isProcessing}
                                 >
-                                  {isProcessing && updateBooking.variables?.status === "completed" ? (
+                                  {isProcessing &&
+                                  updateBooking.variables?.status === "completed" ? (
                                     <RefreshCw className="mr-1 size-3 animate-spin" />
                                   ) : (
                                     <Clock className="mr-1 size-3" />
@@ -578,7 +581,8 @@ export function BookingsSection() {
                                   disabled={isProcessing}
                                   title="Cancel Booking"
                                 >
-                                  {isProcessing && updateBooking.variables?.status === "cancelled" ? (
+                                  {isProcessing &&
+                                  updateBooking.variables?.status === "cancelled" ? (
                                     <RefreshCw className="size-3 animate-spin" />
                                   ) : (
                                     <XCircle className="size-3" />

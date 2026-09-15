@@ -41,7 +41,7 @@ const TABS = [
   { id: "execom", label: "ExeCom Members", icon: ShieldCheck },
   { id: "admins", label: "Admins", icon: ShieldAlert },
   { id: "fingerprints", label: "Fingerprint Data", icon: Fingerprint },
-  { id: "logs", label: "Logs", icon: FileText },
+  { id: "logs", label: "Member Logs", icon: FileText },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 

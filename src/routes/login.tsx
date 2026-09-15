@@ -68,10 +68,7 @@ function LoginPage() {
   }
 
   return (
-    <AuthLayout
-      title="Welcome"
-      subtitle="Sign in or create a new C-ROB account."
-    >
+    <AuthLayout title="Welcome" subtitle="Sign in or create a new C-ROB account.">
       <div className="space-y-4">
         {error ? (
           <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
