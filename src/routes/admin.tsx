@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Fingerprint,
   FileText,
-  Settings,
   ShieldAlert,
   LogOut,
 } from "lucide-react";
@@ -42,7 +41,6 @@ const TABS = [
   { id: "admins", label: "Admins", icon: ShieldAlert },
   { id: "fingerprints", label: "Fingerprint Data", icon: Fingerprint },
   { id: "logs", label: "Member Logs", icon: FileText },
-  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 function AdminDashboard() {
@@ -183,22 +181,7 @@ function AdminDashboard() {
             </Card>
           )}
 
-          {activeTab === "settings" && (
-            <Card className="panel border-destructive/30 fade-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
-                  <ShieldAlert className="size-5" /> Danger Zone
-                </CardTitle>
-                <CardDescription>Advanced system settings</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-foreground/80">
-                  Settings are currently managed via the Supabase Dashboard. Role updates and
-                  physical overrides require direct database access.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          
         </main>
       </AnimatedSection>
     </AppShell>

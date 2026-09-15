@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Fingerprint,
   FileText,
-  Settings,
   ShieldAlert,
   LogOut,
 } from "lucide-react";
@@ -39,7 +38,6 @@ const TABS = [
   { id: "members", label: "Member List", icon: Users },
   { id: "execom", label: "ExeCom Members", icon: ShieldCheck },
   { id: "logs", label: "Member Logs", icon: FileText },
-  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 function ExecomDashboard() {
@@ -163,22 +161,7 @@ function ExecomDashboard() {
           {activeTab === "execom" && <UsersSection filterRole="execom" title="ExeCom Members" />}
           {activeTab === "logs" && <LogsSection />}
 
-          {activeTab === "settings" && (
-            <Card className="panel border-primary/30 fade-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary">
-                  <Settings className="size-5" /> Preferences
-                </CardTitle>
-                <CardDescription>View account preferences and session details</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-foreground/80">
-                  Settings are currently managed via the Supabase Dashboard. Role updates and
-                  physical overrides require direct database access.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          
         </main>
       </AnimatedSection>
     </AppShell>
