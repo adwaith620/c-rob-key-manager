@@ -80,6 +80,18 @@ export function LogsSection() {
     enabled: activeTab === "key_access" || role === "admin",
   });
 
+  const sanitizeRow = (row: Record<string, any>) => {
+    const sanitized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(row)) {
+      if (typeof value === "string" && /^[=+\-@]/.test(value)) {
+        sanitized[key] = "'" + value;
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  };
+
   const doExport = async (type: "audit" | "attendance" | "key_access") => {
     try {
       setExporting(true);
@@ -195,7 +207,8 @@ export function LogsSection() {
         return;
       }
 
-      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const safeRows = rows.map(sanitizeRow);
+      const worksheet = XLSX.utils.json_to_sheet(safeRows);
       const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
 
       const blob = new Blob([csvOutput], { type: "text/csv;charset=utf-8;" });
