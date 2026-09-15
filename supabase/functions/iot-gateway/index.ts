@@ -185,6 +185,59 @@ serve(async (req) => {
       });
     }
 
+    // ==========================================
+    // ACTION: report_fingerprint_scan
+    // ==========================================
+    if (action === "report_fingerprint_scan") {
+      const { purpose, user_id, fingerprint_id, status = "success", booking_id } = payload;
+
+      if (!purpose || !user_id) {
+        return new Response(JSON.stringify({ error: "Missing purpose or user_id" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      try {
+        if (purpose === "attendance") {
+          await supabaseAdmin.from("execom_attendance_logs").insert({
+            user_id,
+            scanned_at: new Date(esp32_timestamp).toISOString(),
+            status,
+            access_method: "fingerprint",
+            device_id: esp32_id,
+            metadata: { fingerprint_id, idempotency_key },
+          });
+        } else if (purpose === "key_access") {
+          await supabaseAdmin.from("execom_key_access_logs").insert({
+            user_id,
+            booking_id: booking_id || null,
+            scanned_at: new Date(esp32_timestamp).toISOString(),
+            status,
+            action: "checkout",
+            access_method: "fingerprint",
+            device_id: esp32_id,
+            metadata: { fingerprint_id, idempotency_key },
+          });
+        } else {
+          return new Response(JSON.stringify({ error: "Invalid purpose" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ acknowledged: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
