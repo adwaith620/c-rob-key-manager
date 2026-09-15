@@ -29,7 +29,7 @@ export function DailySchedule() {
   // Prevent navigating to the past
   const canGoBack = !isBefore(startOfDay(selectedDate), startOfDay(new Date())) && !isToday;
 
-  const { data: schedule, isLoading } = useQuery({
+  const { data: schedule, isLoading, error } = useQuery({
     queryKey: ["schedule", selectedDate.toISOString()],
     queryFn: async () => {
       if (!supabase) return [];
@@ -45,7 +45,7 @@ export function DailySchedule() {
 
       if (error) {
         console.error("Failed to fetch schedule:", error);
-        return [];
+        throw new Error(error.message);
       }
       return data || [];
     },
@@ -110,6 +110,10 @@ export function DailySchedule() {
           {isLoading ? (
             <div className="flex justify-center py-4">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-4 text-sm text-red-500 bg-red-500/10 rounded-md">
+              Failed to fetch schedule: {(error as Error).message}
             </div>
           ) : !schedule || schedule.length === 0 ? (
             <div className="text-center py-4 text-sm text-muted-foreground bg-muted/20 rounded-md">

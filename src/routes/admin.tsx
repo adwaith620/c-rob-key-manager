@@ -180,8 +180,6 @@ function AdminDashboard() {
               </CardContent>
             </Card>
           )}
-
-          
         </main>
       </AnimatedSection>
     </AppShell>

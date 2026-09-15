@@ -160,8 +160,6 @@ function ExecomDashboard() {
           {activeTab === "members" && <UsersSection filterRole="member" title="Member List" />}
           {activeTab === "execom" && <UsersSection filterRole="execom" title="ExeCom Members" />}
           {activeTab === "logs" && <LogsSection />}
-
-          
         </main>
       </AnimatedSection>
     </AppShell>

@@ -1,0 +1,2 @@
+CREATE OR REPLACE FUNCTION public.test_team_insert() RETURNS text LANGUAGE plpgsql SECURITY DEFINER AS $$ DECLARE err_msg text; BEGIN INSERT INTO public.bookings (user_id, start_time, duration_hours, status, booking_type, team_size, purpose) VALUES ((SELECT id FROM auth.users LIMIT 1), now() + interval '100 days', 1, 'pending', 'team', 5, 'test'); RETURN 'success'; EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS err_msg = MESSAGE_TEXT; RETURN err_msg; END; $$;
+NOTIFY pgrst, 'reload schema';

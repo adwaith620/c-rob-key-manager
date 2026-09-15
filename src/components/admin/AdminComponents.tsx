@@ -498,7 +498,9 @@ export function BookingsSection() {
                                 ? "text-warning border-warning/30"
                                 : b.status === "cancelled"
                                   ? "text-destructive border-destructive/30"
-                                  : "text-green-500 border-green-500/30"
+                                  : b.status === "expired"
+                                    ? "text-muted-foreground border-border/50"
+                                    : "text-green-500 border-green-500/30"
                           }
                         >
                           {b.status}
@@ -591,7 +593,9 @@ export function BookingsSection() {
                               </>
                             )}
 
-                            {(b.status === "completed" || b.status === "cancelled") && (
+                            {(b.status === "completed" ||
+                              b.status === "cancelled" ||
+                              b.status === "expired") && (
                               <span className="text-xs text-muted-foreground italic">
                                 No actions available
                               </span>

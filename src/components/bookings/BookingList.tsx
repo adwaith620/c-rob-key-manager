@@ -15,7 +15,7 @@ export interface Booking {
   user_id: string;
   start_time: string;
   duration_hours: number;
-  status: "pending" | "confirmed" | "cancelled" | "completed";
+  status: "pending" | "confirmed" | "cancelled" | "completed" | "expired";
   created_at: string;
   booking_type: "individual" | "team";
   team_size: number;
@@ -83,14 +83,20 @@ export function BookingList() {
   const now = new Date();
   const upcoming =
     bookings?.filter(
-      (b) => new Date(b.start_time) > now && b.status !== "cancelled" && b.status !== "completed",
+      (b) =>
+        new Date(b.start_time) > now &&
+        b.status !== "cancelled" &&
+        b.status !== "completed" &&
+        b.status !== "expired",
     ) || [];
 
   const pastAll =
     bookings
       ?.filter(
         (b) =>
-          (new Date(b.start_time) <= now && b.status !== "cancelled") || b.status === "completed",
+          (new Date(b.start_time) <= now && b.status !== "cancelled") ||
+          b.status === "completed" ||
+          b.status === "expired",
       )
       .reverse() || [];
   const cancelledAll = bookings?.filter((b) => b.status === "cancelled").reverse() || [];
@@ -127,27 +133,32 @@ export function BookingList() {
               ? "bg-primary/20 text-primary border-primary/30"
               : booking.status === "pending"
                 ? "bg-warning/20 text-warning border-warning/30"
-                : "bg-muted text-muted-foreground border-border/50"
+                : booking.status === "cancelled"
+                  ? "bg-destructive/10 text-destructive border-destructive/30"
+                  : "bg-muted text-muted-foreground border-border/50"
           }
           variant="outline"
         >
           {booking.status}
         </Badge>
-        {showCancel && booking.status !== "cancelled" && booking.status !== "completed" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            onClick={() => {
-              if (confirm("Are you sure you want to cancel this booking?")) {
-                cancelBooking(booking.id);
-              }
-            }}
-          >
-            <XCircle className="size-4" />
-            <span className="sr-only">Cancel</span>
-          </Button>
-        )}
+        {showCancel &&
+          booking.status !== "cancelled" &&
+          booking.status !== "completed" &&
+          booking.status !== "expired" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => {
+                if (confirm("Are you sure you want to cancel this booking?")) {
+                  cancelBooking(booking.id);
+                }
+              }}
+            >
+              <XCircle className="size-4" />
+              <span className="sr-only">Cancel</span>
+            </Button>
+          )}
       </div>
     </div>
   );

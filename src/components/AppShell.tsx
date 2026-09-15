@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { CalendarClock, KeyRound, LogOut, ShieldCheck, Users } from "lucide-react";
+import { CalendarClock, KeyRound, LogOut, ShieldCheck, Users, HelpCircle, Info } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,8 @@ const NAV: NavItem[] = [
     icon: CalendarClock,
     roles: ["member"],
   },
+  { to: "/help", label: "Help & Support", icon: HelpCircle, roles: ["member"] },
+  { to: "/about", label: "About Us", icon: Info, roles: ["member"] },
   { to: "/execom", label: "ExeCom Dashboard", icon: ShieldCheck, roles: ["execom"] },
 ];
 

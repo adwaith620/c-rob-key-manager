@@ -10,10 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccessDeniedRouteImport } from './routes/access-denied'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ExecomRouteImport } from './routes/execom'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MemberRouteImport } from './routes/member'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -28,6 +30,11 @@ import { Route as ExecomReportsRouteImport } from './routes/execom/reports'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccessDeniedRoute = AccessDeniedRouteImport.update({
@@ -48,6 +55,11 @@ const ExecomRoute = ExecomRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -103,10 +115,12 @@ const ExecomReportsRoute = ExecomReportsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
   '/execom': typeof ExecomRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
   '/login': typeof LoginRoute
   '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
@@ -120,9 +134,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
   '/login': typeof LoginRoute
   '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
@@ -137,10 +153,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
   '/execom': typeof ExecomRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
   '/login': typeof LoginRoute
   '/member': typeof MemberRoute
   '/register': typeof RegisterRoute
@@ -156,10 +174,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/access-denied'
     | '/admin'
     | '/execom'
     | '/forgot-password'
+    | '/help'
     | '/login'
     | '/member'
     | '/register'
@@ -173,9 +193,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/access-denied'
     | '/admin'
     | '/forgot-password'
+    | '/help'
     | '/login'
     | '/member'
     | '/register'
@@ -189,10 +211,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/access-denied'
     | '/admin'
     | '/execom'
     | '/forgot-password'
+    | '/help'
     | '/login'
     | '/member'
     | '/register'
@@ -207,10 +231,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   AccessDeniedRoute: typeof AccessDeniedRoute
   AdminRoute: typeof AdminRoute
   ExecomRoute: typeof ExecomRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HelpRoute: typeof HelpRoute
   LoginRoute: typeof LoginRoute
   MemberRoute: typeof MemberRoute
   RegisterRoute: typeof RegisterRoute
@@ -224,6 +250,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/access-denied': {
@@ -252,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -350,10 +390,12 @@ const ExecomRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   AccessDeniedRoute: AccessDeniedRoute,
   AdminRoute: AdminRoute,
   ExecomRoute: ExecomRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  HelpRoute: HelpRoute,
   LoginRoute: LoginRoute,
   MemberRoute: MemberRoute,
   RegisterRoute: RegisterRoute,

@@ -18,6 +18,10 @@ ALTER TABLE public.bookings ALTER COLUMN booking_type SET NOT NULL;
 ALTER TABLE public.bookings ALTER COLUMN team_size SET NOT NULL;
 
 -- Add check constraints
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS check_booking_type;
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS check_team_size;
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS check_booking_logic;
+
 ALTER TABLE public.bookings ADD CONSTRAINT check_booking_type CHECK (booking_type IN ('individual', 'team'));
 ALTER TABLE public.bookings ADD CONSTRAINT check_team_size CHECK (team_size >= 1 AND team_size <= 30);
 ALTER TABLE public.bookings ADD CONSTRAINT check_booking_logic CHECK (
