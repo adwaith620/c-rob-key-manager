@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/execom", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/execom/key-locker", label: "Key Locker", icon: KeyRound },
   { to: "/execom/project-requests", label: "Project Requests", icon: FileText },
   { to: "/execom/active-projects", label: "Active Projects", icon: Briefcase },
   { to: "/execom/members", label: "Members", icon: Users },

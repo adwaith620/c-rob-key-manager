@@ -36,7 +36,6 @@ export const Route = createFileRoute("/execom")({
 const TABS = [
   { id: "overview", label: "Overview", icon: Activity },
   { id: "bookings", label: "Booking Requests", icon: Calendar },
-  { id: "keys", label: "Key Status", icon: Key },
   { id: "members", label: "Member List", icon: Users },
   { id: "execom", label: "ExeCom Members", icon: ShieldCheck },
   { id: "logs", label: "Logs", icon: FileText },

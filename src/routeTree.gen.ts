@@ -21,7 +21,6 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ExecomIndexRouteImport } from './routes/execom/index'
 import { Route as ExecomActiveProjectsRouteImport } from './routes/execom/active-projects'
 import { Route as ExecomHistoryRouteImport } from './routes/execom/history'
-import { Route as ExecomKeyLockerRouteImport } from './routes/execom/key-locker'
 import { Route as ExecomMembersRouteImport } from './routes/execom/members'
 import { Route as ExecomProjectRequestsRouteImport } from './routes/execom/project-requests'
 import { Route as ExecomReportsRouteImport } from './routes/execom/reports'
@@ -87,11 +86,6 @@ const ExecomHistoryRoute = ExecomHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => ExecomRoute,
 } as any)
-const ExecomKeyLockerRoute = ExecomKeyLockerRouteImport.update({
-  id: '/key-locker',
-  path: '/key-locker',
-  getParentRoute: () => ExecomRoute,
-} as any)
 const ExecomMembersRoute = ExecomMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -125,7 +119,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/execom/active-projects': typeof ExecomActiveProjectsRoute
   '/execom/history': typeof ExecomHistoryRoute
-  '/execom/key-locker': typeof ExecomKeyLockerRoute
   '/execom/members': typeof ExecomMembersRoute
   '/execom/project-requests': typeof ExecomProjectRequestsRoute
   '/execom/reports': typeof ExecomReportsRoute
@@ -143,7 +136,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/execom/active-projects': typeof ExecomActiveProjectsRoute
   '/execom/history': typeof ExecomHistoryRoute
-  '/execom/key-locker': typeof ExecomKeyLockerRoute
   '/execom/members': typeof ExecomMembersRoute
   '/execom/project-requests': typeof ExecomProjectRequestsRoute
   '/execom/reports': typeof ExecomReportsRoute
@@ -163,7 +155,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/execom/active-projects': typeof ExecomActiveProjectsRoute
   '/execom/history': typeof ExecomHistoryRoute
-  '/execom/key-locker': typeof ExecomKeyLockerRoute
   '/execom/members': typeof ExecomMembersRoute
   '/execom/project-requests': typeof ExecomProjectRequestsRoute
   '/execom/reports': typeof ExecomReportsRoute
@@ -184,7 +175,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/execom/active-projects'
     | '/execom/history'
-    | '/execom/key-locker'
     | '/execom/members'
     | '/execom/project-requests'
     | '/execom/reports'
@@ -202,7 +192,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/execom/active-projects'
     | '/execom/history'
-    | '/execom/key-locker'
     | '/execom/members'
     | '/execom/project-requests'
     | '/execom/reports'
@@ -221,7 +210,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/execom/active-projects'
     | '/execom/history'
-    | '/execom/key-locker'
     | '/execom/members'
     | '/execom/project-requests'
     | '/execom/reports'
@@ -327,13 +315,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExecomHistoryRouteImport
       parentRoute: typeof ExecomRoute
     }
-    '/execom/key-locker': {
-      id: '/execom/key-locker'
-      path: '/key-locker'
-      fullPath: '/execom/key-locker'
-      preLoaderRoute: typeof ExecomKeyLockerRouteImport
-      parentRoute: typeof ExecomRoute
-    }
     '/execom/members': {
       id: '/execom/members'
       path: '/members'
@@ -368,7 +349,6 @@ declare module '@tanstack/react-router' {
 interface ExecomRouteChildren {
   ExecomActiveProjectsRoute: typeof ExecomActiveProjectsRoute
   ExecomHistoryRoute: typeof ExecomHistoryRoute
-  ExecomKeyLockerRoute: typeof ExecomKeyLockerRoute
   ExecomMembersRoute: typeof ExecomMembersRoute
   ExecomProjectRequestsRoute: typeof ExecomProjectRequestsRoute
   ExecomReportsRoute: typeof ExecomReportsRoute
@@ -379,7 +359,6 @@ interface ExecomRouteChildren {
 const ExecomRouteChildren: ExecomRouteChildren = {
   ExecomActiveProjectsRoute: ExecomActiveProjectsRoute,
   ExecomHistoryRoute: ExecomHistoryRoute,
-  ExecomKeyLockerRoute: ExecomKeyLockerRoute,
   ExecomMembersRoute: ExecomMembersRoute,
   ExecomProjectRequestsRoute: ExecomProjectRequestsRoute,
   ExecomReportsRoute: ExecomReportsRoute,

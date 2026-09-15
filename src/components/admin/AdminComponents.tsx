@@ -295,7 +295,7 @@ export function OverviewSection() {
 export function BookingsSection() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const {
@@ -424,7 +424,7 @@ export function BookingsSection() {
                 <TableHead>Member</TableHead>
                 <TableHead>Type & Purpose</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="min-w-[180px]">Actions</TableHead>
+                {role !== "execom" && <TableHead className="min-w-[180px]">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -504,111 +504,113 @@ export function BookingsSection() {
                           {b.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {b.status === "pending" && (
-                            <>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="h-7 text-[11px] px-2 bg-green-600 hover:bg-green-700 text-white border-0"
-                                onClick={() => handleAction(b, "confirmed")}
-                                disabled={isProcessing}
-                              >
-                                {isProcessing && updateBooking.variables?.status === "confirmed" ? (
-                                  <RefreshCw className="mr-1 size-3 animate-spin" />
-                                ) : (
-                                  <CheckCircle className="mr-1 size-3" />
-                                )}
-                                Approve
-                              </Button>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="h-7 text-[11px] px-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0"
-                                onClick={() =>
-                                  handleAction(
-                                    b,
-                                    "cancelled",
-                                    "Are you sure you want to reject this booking request?",
-                                  )
-                                }
-                                disabled={isProcessing}
-                              >
-                                {isProcessing && updateBooking.variables?.status === "cancelled" ? (
-                                  <RefreshCw className="mr-1 size-3 animate-spin" />
-                                ) : (
-                                  <XCircle className="mr-1 size-3" />
-                                )}
-                                Reject
-                              </Button>
-                            </>
-                          )}
+                      {role !== "execom" && (
+                        <TableCell>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {b.status === "pending" && (
+                              <>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="h-7 text-[11px] px-2 bg-green-600 hover:bg-green-700 text-white border-0"
+                                  onClick={() => handleAction(b, "confirmed")}
+                                  disabled={isProcessing}
+                                >
+                                  {isProcessing && updateBooking.variables?.status === "confirmed" ? (
+                                    <RefreshCw className="mr-1 size-3 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="mr-1 size-3" />
+                                  )}
+                                  Approve
+                                </Button>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="h-7 text-[11px] px-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0"
+                                  onClick={() =>
+                                    handleAction(
+                                      b,
+                                      "cancelled",
+                                      "Are you sure you want to reject this booking request?",
+                                    )
+                                  }
+                                  disabled={isProcessing}
+                                >
+                                  {isProcessing && updateBooking.variables?.status === "cancelled" ? (
+                                    <RefreshCw className="mr-1 size-3 animate-spin" />
+                                  ) : (
+                                    <XCircle className="mr-1 size-3" />
+                                  )}
+                                  Reject
+                                </Button>
+                              </>
+                            )}
 
-                          {b.status === "confirmed" && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-[11px] px-2 border-green-500/30 text-green-500 hover:bg-green-500/10"
-                                onClick={() =>
-                                  handleAction(b, "completed", "Mark this booking as completed?")
-                                }
-                                disabled={isProcessing}
-                              >
-                                {isProcessing && updateBooking.variables?.status === "completed" ? (
-                                  <RefreshCw className="mr-1 size-3 animate-spin" />
-                                ) : (
-                                  <Clock className="mr-1 size-3" />
-                                )}
-                                Complete
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-[11px] px-2 border-destructive/30 text-destructive hover:bg-destructive/10"
-                                onClick={() =>
-                                  handleAction(
-                                    b,
-                                    "cancelled",
-                                    "Are you sure you want to cancel this approved booking?",
-                                  )
-                                }
-                                disabled={isProcessing}
-                                title="Cancel Booking"
-                              >
-                                {isProcessing && updateBooking.variables?.status === "cancelled" ? (
-                                  <RefreshCw className="size-3 animate-spin" />
-                                ) : (
-                                  <XCircle className="size-3" />
-                                )}
-                              </Button>
-                            </>
-                          )}
+                            {b.status === "confirmed" && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-[11px] px-2 border-green-500/30 text-green-500 hover:bg-green-500/10"
+                                  onClick={() =>
+                                    handleAction(b, "completed", "Mark this booking as completed?")
+                                  }
+                                  disabled={isProcessing}
+                                >
+                                  {isProcessing && updateBooking.variables?.status === "completed" ? (
+                                    <RefreshCw className="mr-1 size-3 animate-spin" />
+                                  ) : (
+                                    <Clock className="mr-1 size-3" />
+                                  )}
+                                  Complete
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-[11px] px-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+                                  onClick={() =>
+                                    handleAction(
+                                      b,
+                                      "cancelled",
+                                      "Are you sure you want to cancel this approved booking?",
+                                    )
+                                  }
+                                  disabled={isProcessing}
+                                  title="Cancel Booking"
+                                >
+                                  {isProcessing && updateBooking.variables?.status === "cancelled" ? (
+                                    <RefreshCw className="size-3 animate-spin" />
+                                  ) : (
+                                    <XCircle className="size-3" />
+                                  )}
+                                </Button>
+                              </>
+                            )}
 
-                          {(b.status === "completed" || b.status === "cancelled") && (
-                            <span className="text-xs text-muted-foreground italic">
-                              No actions available
-                            </span>
-                          )}
+                            {(b.status === "completed" || b.status === "cancelled") && (
+                              <span className="text-xs text-muted-foreground italic">
+                                No actions available
+                              </span>
+                            )}
 
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 ml-auto"
-                                disabled={isProcessing}
-                              >
-                                <MoreHorizontal className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem disabled>View Details</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 ml-auto"
+                                  disabled={isProcessing}
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem disabled>View Details</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })
@@ -808,7 +810,7 @@ export function LogsSection() {
                     <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
                       User
                     </div>
-                    <div className="text-sm font-mono truncate" title={log.profiles?.email}>
+                    <div className="text-sm font-serif truncate" style={{ fontFamily: '"Times New Roman", Times, serif' }} title={log.profiles?.email}>
                       {log.profiles?.email || log.user_id?.split("-")[0] || "System"}
                     </div>
                   </div>

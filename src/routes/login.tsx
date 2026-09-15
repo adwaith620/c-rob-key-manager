@@ -69,16 +69,8 @@ function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your C-ROB account."
-      footer={
-        <>
-          Need an account?{" "}
-          <Link to="/register" className="text-primary hover:underline">
-            Register
-          </Link>
-        </>
-      }
+      title="Welcome"
+      subtitle="Sign in or create a new C-ROB account."
     >
       <div className="space-y-4">
         {error ? (
@@ -113,7 +105,7 @@ function LoginPage() {
             />
             <path d="M1 1h22v22H1z" fill="none" />
           </svg>
-          {busy ? "Connecting..." : "Sign in with Google"}
+          {busy ? "Connecting..." : "Continue with Google"}
         </Button>
 
         <div className="text-center text-xs text-muted-foreground mt-4">

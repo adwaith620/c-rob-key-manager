@@ -71,11 +71,8 @@ function Landing() {
             <CrobLogo size="sm" />
           </Link>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/login">Login</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to="/register">Register</Link>
+            <Button asChild variant="default" size="sm">
+              <Link to="/login">Sign In</Link>
             </Button>
           </div>
         </div>
@@ -101,8 +98,8 @@ function Landing() {
             </p>
 
             <div className="mt-9 flex flex-wrap gap-3">
-              <Button asChild size="lg" variant="crobSecondary">
-                <Link to="/register">
+              <Button asChild size="lg" variant="crobSecondary" className="w-full sm:w-[320px]">
+                <Link to="/login">
                   <svg
                     className="mr-2 h-4 w-4 bg-white rounded-full"
                     aria-hidden="true"
@@ -128,9 +125,6 @@ function Landing() {
                   </svg>
                   Continue with Google
                 </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/login">Member Login</Link>
               </Button>
             </div>
 

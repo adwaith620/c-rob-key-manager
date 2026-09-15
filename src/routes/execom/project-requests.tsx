@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { FileText, Search, Plus, Check, X, KeyRound } from "lucide-react";
+import { FileText, Search, Plus } from "lucide-react";
 import { ExecomPageHeading } from "@/components/execom/ExecomLayout";
 import { StatusBadge } from "@/components/execom/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,12 +24,13 @@ export const Route = createFileRoute("/execom/project-requests")({
 
 function ProjectRequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [requests, setRequests] = useState<ProjectRequest[]>(mockRequests);
+  // Using mock data directly for read-only view
+  const requests = mockRequests;
   const [selectedRequest, setSelectedRequest] = useState<ProjectRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
 
-  // New Request Form State
+  // New Request Form State (Preserved for making a request, NOT for administrative approval)
   const [teamSizeInput, setTeamSizeInput] = useState("");
 
   const filteredRequests = requests.filter(
@@ -38,48 +39,6 @@ function ProjectRequestsPage() {
       req.applicant.toLowerCase().includes(searchTerm.toLowerCase()) ||
       req.id.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
-  const handleApprove = () => {
-    if (!selectedRequest) return;
-    setRequests(
-      requests.map((r) => (r.id === selectedRequest.id ? { ...r, status: "Approved" } : r)),
-    );
-    setSelectedRequest({ ...selectedRequest, status: "Approved" });
-  };
-
-  const handleReject = () => {
-    if (!selectedRequest) return;
-    if (confirm("Are you sure you want to reject this request?")) {
-      setRequests(
-        requests.map((r) => (r.id === selectedRequest.id ? { ...r, status: "Rejected" } : r)),
-      );
-      setSelectedRequest({ ...selectedRequest, status: "Rejected" });
-    }
-  };
-
-  const handleIssueKey = () => {
-    if (!selectedRequest) return;
-    setRequests(
-      requests.map((r) =>
-        r.id === selectedRequest.id
-          ? { ...r, status: "Active", assignedKey: selectedRequest.requestedKey }
-          : r,
-      ),
-    );
-    setSelectedRequest({
-      ...selectedRequest,
-      status: "Active",
-      assignedKey: selectedRequest.requestedKey,
-    });
-  };
-
-  const handleReturn = () => {
-    if (!selectedRequest) return;
-    setRequests(
-      requests.map((r) => (r.id === selectedRequest.id ? { ...r, status: "Completed" } : r)),
-    );
-    setSelectedRequest({ ...selectedRequest, status: "Completed" });
-  };
 
   const handleTeamSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value);
@@ -91,7 +50,7 @@ function ProjectRequestsPage() {
     <>
       <ExecomPageHeading
         title="Project Requests"
-        subtitle="Manage and approve project key requests."
+        subtitle="Monitor project key requests."
         right={
           <Dialog open={isNewRequestOpen} onOpenChange={setIsNewRequestOpen}>
             <DialogTrigger asChild>
@@ -172,19 +131,25 @@ function ProjectRequestsPage() {
                 <th className="px-6 py-3 font-medium">Requested Key</th>
                 <th className="px-6 py-3 font-medium">Date</th>
                 <th className="px-6 py-3 font-medium">Status</th>
-                <th className="px-6 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
                     No requests found.
                   </td>
                 </tr>
               ) : (
                 filteredRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-muted/30 transition-colors">
+                  <tr 
+                    key={req.id} 
+                    className="hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedRequest(req);
+                      setIsDetailsOpen(true);
+                    }}
+                  >
                     <td className="px-6 py-4 font-medium">{req.id}</td>
                     <td className="px-6 py-4">{req.projectName}</td>
                     <td className="px-6 py-4">
@@ -198,18 +163,6 @@ function ProjectRequestsPage() {
                     <td className="px-6 py-4">
                       <StatusBadge status={req.status} />
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequest(req);
-                          setIsDetailsOpen(true);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </td>
                   </tr>
                 ))
               )}
@@ -218,7 +171,7 @@ function ProjectRequestsPage() {
         </div>
       </Card>
 
-      {/* Details Dialog */}
+      {/* Details Dialog - Read Only */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           {selectedRequest && (
@@ -292,39 +245,9 @@ function ProjectRequestsPage() {
               </div>
 
               <DialogFooter className="border-t border-border/50 pt-4 gap-2 sm:justify-end">
-                {selectedRequest.status === "Pending" && (
-                  <>
-                    <Button variant="destructive" onClick={handleReject} className="gap-2">
-                      <X className="size-4" /> Reject
-                    </Button>
-                    <Button
-                      variant="default"
-                      onClick={handleApprove}
-                      className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
-                    >
-                      <Check className="size-4" /> Approve
-                    </Button>
-                  </>
-                )}
-                {selectedRequest.status === "Approved" && (
-                  <Button variant="default" onClick={handleIssueKey} className="gap-2">
-                    <KeyRound className="size-4" /> Issue Key
-                  </Button>
-                )}
-                {selectedRequest.status === "Active" && (
-                  <Button
-                    variant="default"
-                    onClick={handleReturn}
-                    className="gap-2 bg-info hover:bg-info/90 text-info-foreground"
-                  >
-                    <Check className="size-4" /> Mark as Returned
-                  </Button>
-                )}
-                {selectedRequest.status === "Completed" && (
-                  <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
-                    Close
-                  </Button>
-                )}
+                <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
+                  Close
+                </Button>
               </DialogFooter>
             </>
           )}
